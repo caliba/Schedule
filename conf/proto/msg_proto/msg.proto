@@ -1,0 +1,61 @@
+syntax = "proto3";
+// service client to frontend
+service C2F{
+  rpc C2F_getmsg(C2F_Request) returns (C2F_Response){}
+}
+
+message  C2F_Request{
+  int32 request_id = 1;
+  message Image {
+    int32 height = 1;
+    int32 width = 2;
+    bytes byte_image = 3;
+  }
+  Image image = 2;
+}
+
+message C2F_Response{
+  bool flag = 1;
+}
+
+// service frontend to server
+service F2S{
+  rpc F2S_getmsg(F2S_Request) returns (F2S_Response){}
+}
+
+message F2S_Request{
+  int32 request_id = 1;
+  int32 size = 2;
+  repeated bytes image = 3;
+}
+
+message F2S_Response{
+  bool flag = 1;
+}
+
+// service server to client
+service S2C{
+  rpc S2C_getmsg(S2C_Request) returns (S2C_Response){}
+}
+
+message S2C_Request{
+  repeated string res = 1;
+}
+
+message S2C_Response{
+  bool flag = 1;
+}
+
+// model config service F2S
+service Setup{
+  rpc Setup_getmsg(Setup_Request) returns (Setup_Response){}
+}
+
+message Setup_Request{
+  string port = 1;
+  int32 batch = 2;
+}
+
+message Setup_Response{
+  bool flag = 1;
+}

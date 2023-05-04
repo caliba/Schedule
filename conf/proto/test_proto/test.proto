@@ -1,0 +1,25 @@
+/*
+ */
+syntax = "proto3";
+
+service Test {
+  rpc Test_Getmsg(Test_Request) returns (Test_Response){}
+}
+
+
+
+message Test_Request{
+  repeated int32 number = 1;
+  message Image{
+    int32 height = 1;
+    int32 width = 2;
+    bytes img = 3;
+  }
+  repeated Image image = 2;
+}
+
+
+
+message Test_Response{
+  bool response = 1;
+}
