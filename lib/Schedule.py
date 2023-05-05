@@ -20,7 +20,7 @@ class Schedule:
         self.list_q = []
 
         for i in range(len(self.config)):
-            self.list_q.append(Queue())
+            self.list_q.append([])
 
     def RoundRobin(self):
         """
@@ -28,13 +28,14 @@ class Schedule:
         :return:
         """
         index = 0
+        print("--- Scheduling policy RoundRobin ---")
         while True:
             while not self.queue.empty():
 
-                self.list_q[index].put(self.queue.get())
-                print(" index {} len {}".format(index,self.list_q[index].qsize()))
-                if self.list_q[index].qsize() == self.config[self.server_port[index]]:
-                    self.list_q[index] = Queue()
+                self.list_q[index].append(self.queue.get())
+                print(" index {} len {}".format(index,len(self.list_q[index])))
+                if len(self.list_q[index]) == self.config[self.server_port[index]]:
+                    self.list_q[index].clear()
                 index = (index + 1) % len(self.config)
 
     def FullBatch(self):

@@ -23,11 +23,21 @@ import math
 import conf.proto.msg_proto.msg_pb2 as pb2
 import conf.proto.msg_proto.msg_pb2_grpc as pb2_grpc
 from queue import Queue
-from lib.Schedule import Schedule
+
 _ONE_DAY_IN_SECONDS = 60 * 60
 
 
+class F_Request:
+
+    def __init__(self, img, request_id):
+        self.img = img
+        self.request_id = request_id
+
+
 class C2F(pb2_grpc.C2FServicer):
+    """
+        grpc client to frontend
+    """
 
     def __init__(self, queue):
         self.queue = queue
@@ -38,43 +48,47 @@ class C2F(pb2_grpc.C2FServicer):
 
 
 class Setup(pb2_grpc.SetupServicer):
+    """
+        register workload config in frontend
+    """
 
-    def __init__(self, dic, server_port):
+    def __init__(self, dic, server_port, list_q):
         self.dic = dic
+        self.list_q = list_q
         self.server_port = server_port
 
     def Setup_getmsg(self, request, context):
         self.dic[request.port] = request.batch
         self.server_port.append(request.port)
+        self.list_q.append([])
         print("Frontend target server config is {}".format(self.dic))
         # print(self.server_port)
         return pb2.S2C_Response(flag=True)
 
 
-class Server:
-    def __init__(self, port, aimport, height=224, width=224):
+class Frontend:
+    def __init__(self, port, height=224, width=224,policy="BA"):
         """
 
-        :param port: frontend port
-        :param aimport:
-        :param height:
-        :param width:
+        :param port: Frontend ip
+        :param height: preprocess img height
+        :param width: preprocess img width
         """
+        self.policy = policy
         self.server_port = []
         self.config = {}  # port-->batch对应关系
         self.port = port
-        self.aim_port = aimport
+        self.list_q = []
         self.recv_q = Queue()
         self.target = 0
         self.send_q = Queue()
         self.width = width
         self.height = height
-        self.schedule = Schedule(config=self.config,server_port=self.server_port,queue=self.send_q)
 
-    def __server_run(self):
+    def __server(self):
         server = grpc.server(futures.ThreadPoolExecutor(max_workers=4))
         pb2_grpc.add_C2FServicer_to_server(C2F(self.recv_q), server)
-        pb2_grpc.add_SetupServicer_to_server(Setup(self.config, self.server_port), server)
+        pb2_grpc.add_SetupServicer_to_server(Setup(self.config, self.server_port, self.list_q), server)
         port = '[::]:' + str(self.port)
         server.add_insecure_port(port)
         server.start()
@@ -88,6 +102,7 @@ class Server:
             server.stop(0)
 
     def __preprocess(self, req):
+        request_id = req.request_id # 请求序号
         h = req.image.height
         w = req.image.width
         img_bytes = req.image.byte_image
@@ -107,37 +122,55 @@ class Server:
                 req = self.recv_q.get()
                 self.send_q.put(self.__preprocess(req))
 
-    def __find_workload(self):
+    def __schedule(self):
+        if self.policy == "RR":
+            self.__RoundRobin()
+        if self.policy == "BA":
+            self.__BatchAware()
 
-        target_port = self.server_port[self.target]
-        print(self.target)
-        self.target = (self.target + 1) % len(self.config)
-        print("after {}".format(self.target))
-
-        return target_port, self.config[target_port]
-
-
-
-    def __send_service(self):
-        print("q_data is detecting ---- ")
-        count = 0
+    def __RoundRobin(self):
+        index = 0
+        request_id = 1
+        print("--- Scheduling policy RoundRobin ---")
         while True:
-            while not self.send_q.empty():  # 当队列不为空时
-                port, batch = self.__find_workload()  # 获取server port
-                count = count + 1
-                print(port)
-                req_list = []
+            while not self.send_q.empty():
+                self.list_q[index].append(self.send_q.get())
+                print(" index {} len {}".format(index, len(self.list_q[index])))
+                if len(self.list_q[index]) == self.config[self.server_port[index]]:
+                    aim_port = self.server_port[index]
+                    bytes_img = self.list_q[index]
+                    t1 = threading.Thread(target=self.__send_req,
+                                          kwargs={'aim_port': self.server_port[index], 'request_id': request_id,
+                                                  'bytes_img': bytes_img})
+                    t1.start()
+                    t1.join()
+                    self.list_q[index].clear()
+                    request_id = request_id + 1
+                index = (index + 1) % len(self.config)
+
+    def __BatchAware(self):
+        print("--- Scheduling policy BatchAware ---")
+        index = 0
+        request_id = 1
+        while True:
+            while not self.send_q.empty():
+                port = self.server_port[index]
+                batch = self.config[port]
                 while batch:
-                    if not self.send_q.empty():
-                        batch = batch - 1
-                        # print(batch)
-                        req_list.append(self.send_q.get())
+                    self.list_q[index].append(self.send_q.get())
+                    batch = batch - 1
 
-                self.__send_req(count, req_list)
+                t1 = threading.Thread(target=self.__send_req,
+                                      kwargs={'aim_port': self.server_port[index], 'request_id': request_id,
+                                              'bytes_img': self.list_q[index]})
+                t1.start()
+                t1.join()
+                self.list_q[index].clear()
+                request_id = request_id + 1
+                index = (index + 1) % len(self.config)
 
-    def __send_req(self, request_id, bytes_img):
-
-        target_port = 'localhost:' + str(self.aim_port)
+    def __send_req(self, aim_port, request_id, bytes_img):
+        target_port = 'localhost:' + str(aim_port)
         with grpc.insecure_channel(target_port) as channel:
             stub = pb2_grpc.F2SStub(channel)
             msg_send = pb2.F2S_Request(request_id=request_id, size=self.width, image=bytes_img)
@@ -145,16 +178,16 @@ class Server:
 
     def run(self):
 
-        t1 = threading.Thread(target=self.__server_run)  # 启动服务端
+        t1 = threading.Thread(target=self.__server)  # 启动服务端
         t2 = threading.Thread(target=self.__data_save)  # 启动转发端
-        t3 = threading.Thread(target=self.__send_service)  # 启动发送端
+        t3 = threading.Thread(target=self.__schedule)  # 启动发送端
         t1.start()
         t2.start()
         t3.start()
 
 
 def main():
-    s = Server(port=50001, aimport=50002)
+    s = Frontend(port=50001,policy="RR")
     s.run()
 
 

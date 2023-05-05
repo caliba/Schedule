@@ -31,15 +31,21 @@ class S2C(pb2_grpc.S2CServicer):
 
     def S2C_getmsg(self, request, context):
         self.q.put(request.res)
-        print(request.res)
-        print(len(request.res))
         return pb2.S2C_Response(flag=True)
+
+
+class Request:
+    def __init__(self, send_time):
+        self.send_time = send_time
+        self.recv_time = None
+        self.dur = None
 
 
 class Client:
 
     def __init__(self, port, aimport, path):
         self.path = path
+        self.latency = {}  # key:request id
         self.aim_port = aimport
         self.port = port
         self.recv_q = Queue()
@@ -84,6 +90,8 @@ class Client:
         for i in range(7):
             time.sleep(2)
             print("send request {}".format(i + 1))
+            r = Request(time.time())
+            self.latency[i+1] = r # 保存每个请求的发送时间
             self.connect(i + 1)
 
     def run(self):
