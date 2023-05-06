@@ -30,6 +30,7 @@ class F2S(pb2_grpc.F2SServicer):
 
     def F2S_getmsg(self, request, context):
         self.queue.put(request)
+        # print(request.index)
         return pb2.F2S_Response(flag=True)
 
 
@@ -87,16 +88,19 @@ class Server:
                 # prepare image data
                 reqs = self.queue.get()
                 size = reqs.size
-                res_list = [str(self.port)]
+                request_id = reqs.index
+                res_list = []
                 batch = self.__parse_batch(reqs.image, size)
                 # model inference
                 start_time = time.time()
                 res = self.model.predict(batch)
-                latency = time.time()-start_time
+                latency = time.time() - start_time
                 res = keras.applications.vgg16.decode_predictions(res)
-                print("Port {}: message lens {} spend time {:.3f} s".format(self.port, len(res),latency))
+                for r in res:
+                    res_list.append(r[0][1])
+                print("Port {}: message lens {} spend time {:.3f} s".format(self.port, len(res), latency))
 
-                self.__send_data(res_list)
+                self.__send_data(res_list, request_id=request_id)
 
     def __server(self):
         server = grpc.server(futures.ThreadPoolExecutor(max_workers=4))
@@ -113,11 +117,11 @@ class Server:
         except KeyboardInterrupt:
             server.stop(0)
 
-    def __send_data(self, res):
+    def __send_data(self, res, request_id):
         target_port = 'localhost:' + str(self.aim_port)
         with grpc.insecure_channel(target_port) as channel:
             stub = pb2_grpc.S2CStub(channel)
-            msg_send = pb2.S2C_Request(res=res)
+            msg_send = pb2.S2C_Request(res=res, index=request_id)
             stub.S2C_getmsg(msg_send)
 
     def run(self):
@@ -128,8 +132,8 @@ class Server:
 
 
 def main():
-    s = Server(port=50002, aimport=50000, feport=50001, model_name="VGG",batch=2)
-    s2 = Server(port=50003, aimport=50000, feport=50001, model_name="VGG",batch=3)
+    s = Server(port=50002, aimport=50000, feport=50001, model_name="VGG", batch=2)
+    s2 = Server(port=50003, aimport=50000, feport=50001, model_name="VGG", batch=2)
     s2.run()
     s.run()
 

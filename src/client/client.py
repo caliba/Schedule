@@ -30,7 +30,8 @@ class S2C(pb2_grpc.S2CServicer):
         self.q = queue
 
     def S2C_getmsg(self, request, context):
-        self.q.put(request.res)
+        self.q.put(request)
+        print(request.index)
         return pb2.S2C_Response(flag=True)
 
 
@@ -39,6 +40,7 @@ class Request:
         self.send_time = send_time
         self.recv_time = None
         self.dur = None
+        self.res = None
 
 
 class Client:
@@ -91,14 +93,30 @@ class Client:
             time.sleep(2)
             print("send request {}".format(i + 1))
             r = Request(time.time())
-            self.latency[i+1] = r # 保存每个请求的发送时间
+            self.latency[i + 1] = r  # 保存每个请求的发送时间
             self.connect(i + 1)
+
+    def __parse_result(self):
+        print("---recieve part is loading")
+        while True:
+            while not self.recv_q.empty():
+                reqs = self.recv_q.get()
+                count = 0
+                for r in reqs.index:
+                    self.latency[r].recv_time = time.time()
+                    self.latency[r].res = reqs.res[count]
+                    self.latency[r].dur = self.latency[r].recv_time - self.latency[r].send_time
+                    print("request id {}, res is {},inference time is {:.3f}".format(r, self.latency[r].res,
+                                                                                     self.latency[r].dur))
+                    count = count + 1
 
     def run(self):
         t1 = threading.Thread(target=self.send_request)
         t2 = threading.Thread(target=self.server_run)
+        t3 = threading.Thread(target=self.__parse_result)
         t1.start()
         t2.start()
+        t3.start()
 
 
 def main():
