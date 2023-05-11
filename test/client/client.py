@@ -16,6 +16,7 @@ import time
 import grpc
 import numpy as np
 import cv2  # BGR
+from lib.mstime import delayMs as delayMs
 import math
 import threading
 import conf.proto.msg_proto.msg_pb2 as pb2
@@ -45,8 +46,9 @@ class Request:
 
 class Client:
 
-    def __init__(self, port, aimport, path):
+    def __init__(self, port, aimport, path, SLOs=1000):
         self.path = path
+        self.slos = SLOs
         self.latency = {}  # key:request id
         self.aim_port = aimport
         self.port = port
@@ -69,31 +71,39 @@ class Client:
 
     def __image_parse(self):
         img_src = cv2.imread(self.path)
+        img_src = cv2.resize(img_src, (224, 224), interpolation=cv2.INTER_AREA)
         h = img_src.shape[0]
         w = img_src.shape[1]
         img_byte = img_src.tobytes()
         return h, w, img_byte
 
     def __generate_Request(self):
-        img = pb2.C2F_Request.Image()
-        img.height, img.width, img.byte_image = self.__image_parse()
-        return img
+        # img = pb2.C2F_Request.Image()
+        # img.height, img.width, img.byte_image = self.__image_parse()
+        a, b, c = self.__image_parse()
+        return c
 
     def connect(self, msg_index):
         target_port = 'localhost:' + str(self.port)
         with grpc.insecure_channel(target_port) as channel:
             stub = pb2_grpc.C2FStub(channel)
             img = self.__generate_Request()
-            msg_send = pb2.C2F_Request(image=img, request_id=msg_index)
-            response = stub.C2F_getmsg(msg_send)
+            # 生成请求信息
+            r = Request(time.time())
+            self.latency[msg_index] = r  # 保存每个请求的发送时间
+            msg_send = pb2.C2F_Request(img=img, request_id=msg_index)
+            st = time.time()
+            stub.C2F_getmsg(msg_send)
+            print("send request time {:.3f}".format(1000 * (time.time() - st)))
             # print(response.flag)
 
     def send_request(self):
-        for i in range(7):
-            time.sleep(2)
+        time.sleep(2)
+        for i in range(10):
+            s = time.time()
+            # delayMs(10)
+            print("{:.3f}".format((time.time() - s) * 1000))
             print("send request {}".format(i + 1))
-            r = Request(time.time())
-            self.latency[i + 1] = r  # 保存每个请求的发送时间
             self.connect(i + 1)
 
     def __parse_result(self):
@@ -106,17 +116,17 @@ class Client:
                     self.latency[r].recv_time = time.time()
                     self.latency[r].res = reqs.res[count]
                     self.latency[r].dur = self.latency[r].recv_time - self.latency[r].send_time
-                    print("request id {}, res is {},inference time is {:.3f}".format(r, self.latency[r].res,
-                                                                                     self.latency[r].dur))
+                    print("request id {}, res is {},inference time is {:.3f}s".format(r, self.latency[r].res,
+                                                                                      self.latency[r].dur))
                     count = count + 1
 
     def run(self):
         t1 = threading.Thread(target=self.send_request)
-        t2 = threading.Thread(target=self.server_run)
-        t3 = threading.Thread(target=self.__parse_result)
+        # t2 = threading.Thread(target=self.server_run)
+        # t3 = threading.Thread(target=self.__parse_result)
         t1.start()
-        t2.start()
-        t3.start()
+        # t2.start()
+        # t3.start()
 
 
 def main():

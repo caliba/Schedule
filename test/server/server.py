@@ -13,6 +13,7 @@ import grpc
 from concurrent import futures
 import numpy as np
 from tensorflow import keras
+from lib.mstime import delayMs as delayMs
 import tensorflow as tf
 from tensorflow.keras.preprocessing.image import img_to_array
 from tensorflow.keras.preprocessing.image import load_img
@@ -60,10 +61,10 @@ class Server:
             res = stub.Setup_getmsg(msg_send)
 
     def __load_model(self):
-        if self.model_name == "VGG":
-            return Models.VGG16().model
-        elif self.model_name == "ResNet50":
-            return Models.ResNet50().model
+        # 模型加载时间为 4s
+        s = time.time()
+        time.sleep(1)
+        print("模型加载完成，用时 {:.3f}s".format(time.time()-s))
 
     def __data_parse(self, bytes_img, size):
         img = np.frombuffer(bytes_img, dtype=np.uint8)
@@ -80,9 +81,32 @@ class Server:
 
         return tf.convert_to_tensor(batch, dtype=tf.float32)
 
+    def __inference(self, batchsize):
+        latency = 0
+        if batchsize == 1:
+            # 1 15
+            latency = random.gauss(15, 1)
+            time.sleep(latency / 1000)
+        elif batchsize == 2:
+            # 2 40
+            s = time.time()
+            delayMs(40) # 延迟40ms
+            print("batchsize = 2")
+            latency = (time.time() - s)*1000
+        elif batchsize == 4:
+            # 4 21
+            latency = random.gauss(21, 1)
+            time.sleep(latency / 1000)
+        elif batchsize == 8:
+            # 8 34
+            latency = random.gauss(34, 1)
+            time.sleep(latency / 1000)
+
+        return latency
+
     def __model(self):
         # loading model
-        self.model = self.__load_model()
+        self.__load_model()
 
         while True:
             while not self.queue.empty():
@@ -91,15 +115,12 @@ class Server:
                 size = reqs.size
                 request_id = reqs.index
                 res_list = []
-                batch = self.__parse_batch(reqs.image, size)
+                # batch = self.__parse_batch(reqs.image, size) # 数据预处理
                 # model inference
-                start_time = time.time()
-                res = self.model.predict(batch)
-                latency = time.time() - start_time
-                res = keras.applications.vgg16.decode_predictions(res)
-                for r in res:
-                    res_list.append(r[0][1])
-                print("Port {}: message lens {} spend time {:.3f} s".format(self.port, len(res), latency))
+                latency = self.__inference(len(reqs.index))
+                for i in reqs.index:
+                    res_list.append("请求"+str(i))
+                print("Port {}: message lens {} spend time {:.3f}ms".format(self.port, len(reqs.index), latency))
 
                 self.__send_data(res_list, request_id=request_id)
 
@@ -134,8 +155,8 @@ class Server:
 
 def main():
     s = Server(port=50002, aimport=50000, feport=50001, model_name="VGG", batch=2)
-    s2 = Server(port=50003, aimport=50000, feport=50001, model_name="VGG", batch=2)
-    s2.run()
+    # s2 = Server(port=50003, aimport=50000, feport=50001, model_name="VGG", batch=2)
+    # s2.run()
     s.run()
 
 

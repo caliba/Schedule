@@ -45,6 +45,10 @@ class C2F(pb2_grpc.C2FServicer):
 
     def C2F_getmsg(self, request, context):
         self.queue.put(request)
+        # print(request.request_id)
+        # print("send time {}".format(request.send_time))
+        # print("time is {}".format(time.time()))
+        # print("client to server grpc time is {:.3f}".format(time.time()-request.send_time))
         return pb2.C2F_Response(flag=True)
 
 
@@ -216,19 +220,22 @@ class Frontend:
         target_port = 'localhost:' + str(aim_port)
         with grpc.insecure_channel(target_port) as channel:
             stub = pb2_grpc.F2SStub(channel)
+
             msg_send = pb2.F2S_Request(request_id=request_id, size=self.width, image=bytes_img, index=index)
+            send_time = time.time()
             response = stub.F2S_getmsg(msg_send)
+            print("frontend to server time is {:.3f}".format(1000*(time.time()-send_time)))
 
     def run(self):
 
         t1 = threading.Thread(target=self.__server)  # 启动服务端
-        t2 = threading.Thread(target=self.__data_save)  # 启动转发端
-        t3 = threading.Thread(target=self.__schedule)  # 启动发送端
-        t4 = threading.Thread(target=self.__Moniter)
+        # t2 = threading.Thread(target=self.__data_save)  # 启动转发端
+        # t3 = threading.Thread(target=self.__schedule)  # 启动发送端
+        # t4 = threading.Thread(target=self.__Moniter)
         t1.start()
-        t2.start()
-        t3.start()
-        t4.start()
+        # t2.start()
+        # t3.start()
+        # t4.start()
 
 
 def main():

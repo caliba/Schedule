@@ -259,3 +259,67 @@ class Setup(object):
             msg__pb2.Setup_Response.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+
+class TestStub(object):
+    """test msg
+    """
+
+    def __init__(self, channel):
+        """Constructor.
+
+        Args:
+            channel: A grpc.Channel.
+        """
+        self.Test_getmsg = channel.unary_unary(
+                '/Test/Test_getmsg',
+                request_serializer=msg__pb2.Test_Request.SerializeToString,
+                response_deserializer=msg__pb2.Test_Response.FromString,
+                )
+
+
+class TestServicer(object):
+    """test msg
+    """
+
+    def Test_getmsg(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+
+def add_TestServicer_to_server(servicer, server):
+    rpc_method_handlers = {
+            'Test_getmsg': grpc.unary_unary_rpc_method_handler(
+                    servicer.Test_getmsg,
+                    request_deserializer=msg__pb2.Test_Request.FromString,
+                    response_serializer=msg__pb2.Test_Response.SerializeToString,
+            ),
+    }
+    generic_handler = grpc.method_handlers_generic_handler(
+            'Test', rpc_method_handlers)
+    server.add_generic_rpc_handlers((generic_handler,))
+
+
+ # This class is part of an EXPERIMENTAL API.
+class Test(object):
+    """test msg
+    """
+
+    @staticmethod
+    def Test_getmsg(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/Test/Test_getmsg',
+            msg__pb2.Test_Request.SerializeToString,
+            msg__pb2.Test_Response.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
