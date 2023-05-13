@@ -17,8 +17,10 @@ import threading
 import time
 import grpc
 from concurrent import futures
+import setproctitle
 import numpy as np
 import cv2  # BGR
+import copy
 import math
 import conf.proto.test_proto.test_pb2 as pb2
 import conf.proto.test_proto.test_pb2_grpc as pb2_grpc
@@ -26,6 +28,7 @@ from queue import Queue
 import lib.mstime as mytime
 
 _ONE_DAY_IN_SECONDS = 60 * 60
+setproctitle.setproctitle("Frontend")
 
 
 class F_Request:
@@ -33,6 +36,15 @@ class F_Request:
     def __init__(self, img, request_id, log):
         self.img = img
         self.request_id = request_id
+        self.log = log
+
+
+class Request2S:
+    def __init__(self, aim_port, request_id, bytes_img, index, log):
+        self.aim_port = aim_port
+        self.request_id = request_id
+        self.bytes_img = bytes_img
+        self.index = index
         self.log = log
 
 
@@ -108,6 +120,7 @@ class Frontend:
         self.recv_q = Queue()
         self.target = 0
         self.send_q = Queue()
+        self.send_QQ = Queue()
         self.width = width
         self.height = height
 
@@ -204,19 +217,36 @@ class Frontend:
             for i in range(len(self.log_q[index])):
                 # print(self.id_q[index][i])
                 # print(type(self.id_q[index][i]))
-                id = self.id_q[index][i]  # 获取请求id
+                idx = self.id_q[index][i]  # 获取请求id
                 # print(id)
-                arrive_t = self.arrive_time[id - 1]  #
+                arrive_t = self.arrive_time[idx - 1]  #
                 res = mytime.get_latency_ms(arrive_t)
                 self.log_q[index][i] = str(self.log_q[index][i]) + " " + str(res) + "ms "
+            # print(index)
+            # print(self.log_q)
+            # print(len(self.log_q))
+            # print(self.log_q[0])
+            print(id(self.id_q[index]))
+
+            aim_port = copy.copy(self.server_port[index])
+            bytes_img = copy.copy(self.list_q[index])
+            _index = copy.copy(self.id_q[index])
+            print(id(_index))
+            log = copy.copy(self.log_q[index])
+            # print(log)
+            r = Request2S(aim_port=aim_port, request_id=request_id, bytes_img=bytes_img,
+                          index=_index, log=log)
+            self.send_QQ.put(r)
+
+            # print(r.log)
             # print(self.log_q[index])
             # 发送请求
-            t1 = threading.Thread(target=self.__send_req,
-                                  kwargs={'aim_port': self.server_port[index], 'request_id': request_id,
-                                          'bytes_img': self.list_q[index], 'index': self.id_q[index],
-                                          'log': self.log_q[index]})
-            t1.start()
-            t1.join()
+            # t1 = threading.Thread(target=self.__send_req,
+            #                       kwargs={'aim_port': self.server_port[index], 'request_id': request_id,
+            #                               'bytes_img': self.list_q[index], 'index': self.id_q[index],
+            #                               'log': self.log_q[index]})
+            # t1.start()
+            # t1.join()
             # 发送完毕后再将发送队列清空
             self.list_q[index].clear()
             self.id_q[index].clear()
@@ -250,13 +280,19 @@ class Frontend:
     def __guard(self):
         pass
 
+    def send(self):
+        while True:
+            req = self.send_QQ.get()
+            print(req.log)
+            print(req.index)
+            self.__send_req(req.aim_port, req.request_id, req.bytes_img, req.index, req.log)
+
     def __send_req(self, aim_port, request_id, bytes_img, index, log):
         target_port = 'localhost:' + str(aim_port)
         # print("send")
-        print(log)
+        # print(log)
         with grpc.insecure_channel(target_port) as channel:
             stub = pb2_grpc.F2SStub(channel)
-
 
             msg_send = pb2.F2S_Request(request_id=request_id, size=self.width, image=bytes_img, index=index,
                                        timestamp=mytime.get_timestamp(), log=log)
@@ -270,11 +306,12 @@ class Frontend:
         t1 = threading.Thread(target=self.__server)  # 启动服务端
         t2 = threading.Thread(target=self.__data_save)  # 启动转发端
         t3 = threading.Thread(target=self.__schedule)  # 启动发送端
+        t4 = threading.Thread(target=self.send)
         # t4 = threading.Thread(target=self.__Moniter)
         t1.start()
         t2.start()
         t3.start()
-        # t4.start()
+        t4.start()
 
 
 def main():

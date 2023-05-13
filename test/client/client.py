@@ -12,6 +12,7 @@
     2. send image to frontend
 """
 from concurrent import futures
+import setproctitle
 import time
 import grpc
 import numpy as np
@@ -25,6 +26,10 @@ import conf.proto.test_proto.test_pb2_grpc as pb2_grpc
 from queue import Queue
 
 _ONE_DAY_IN_SECONDS = 60 * 60
+setproctitle.setproctitle("Client")
+
+# class req_log:
+#     def __init__(self):
 
 
 class S2C(pb2_grpc.S2CServicer):
@@ -124,7 +129,7 @@ class Client:
     def send_request(self):
         time.sleep(2)
         msg = self.__generate_Request()
-        for i in range(20):
+        for i in range(10000):
             delayMs(20)
             # 生成测试数据
             print("send request {}".format(i + 1))
@@ -150,11 +155,11 @@ class Client:
 
     def run(self):
         t1 = threading.Thread(target=self.send_request)
-        t2 = threading.Thread(target=self.server_run)
-        t3 = threading.Thread(target=self.__parse_result)
+        # t2 = threading.Thread(target=self.server_run)
+        # t3 = threading.Thread(target=self.__parse_result)
         t1.start()
-        t2.start()
-        t3.start()
+        # t2.start()
+        # t3.start()
 
 
 def main():

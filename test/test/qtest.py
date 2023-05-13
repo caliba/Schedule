@@ -6,10 +6,13 @@
 # @File    : qtest.py
 # @Software: PyCharm
 from queue import Queue
+class tk:
 
+    def __init__(self,a,b):
+        self.a = a
+        self.b = b
 a  = ["1","2"]
-for i in a:
-    i = i +"s"
-    print(i)
-
-print(a)
+b = []
+print(id(b))
+b = []
+print(id(b))

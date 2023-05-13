@@ -5,7 +5,7 @@
 # @Site    : 
 # @File    : server.py
 # @Software: PyCharm
-
+import setproctitle
 import random
 import threading
 import time
@@ -23,7 +23,16 @@ import conf.proto.test_proto.test_pb2 as pb2
 import conf.proto.test_proto.test_pb2_grpc as pb2_grpc
 from queue import Queue
 
+setproctitle.setproctitle("Server")
 _ONE_DAY_IN_SECONDS = 60 * 60
+
+
+class Request2C:
+
+    def __init__(self, res, log, request_id):
+        self.res = res
+        self.log = log
+        self.request_id = request_id
 
 
 class F2S(pb2_grpc.F2SServicer):
@@ -33,14 +42,14 @@ class F2S(pb2_grpc.F2SServicer):
         self.arrive_t = arrive_t
 
     def F2S_getmsg(self, request, context):
-        print(request.log)
+        # print(request.log)
         for i in range(len(request.log)):
             request.log[i] = request.log[i] + " " + str(mytime.get_latency_ms(request.timestamp)) + " ms "
         # for log in request.log:
         #     log = log + " "+ str(mytime.get_latency_ms(timestamp))+" ms "
         self.queue.put(request)
         self.arrive_t.put(mytime.get_timestamp())  # 获取当前时间戳
-        print(request.log)
+        # print(request.log)
         # print(request.index)
         return pb2.F2S_Response(flag=True)
 
@@ -62,6 +71,7 @@ class Server:
         self.feport = feport
         self.aim_port = aimport
         self.queue = Queue()
+        self.send_q = Queue()
 
         # send server config to frontend
         target_port = 'localhost:' + str(self.feport)
@@ -134,10 +144,9 @@ class Server:
             for i in range(len(reqs.log)):
                 reqs.log[i] = reqs.log[i] + str(mytime.get_latency_ms(arrive_time)) + " ms "
 
-            t = threading.Thread(target=self.__send_data,
-                                 kwargs={'res': res_list, 'request_id': request_id, 'log': reqs.log})
-            t.start()
-            t.join()
+            r = Request2C(res=res_list, request_id=request_id, log=reqs.log)
+            self.send_q.put(r)
+
 
     def __server(self):
         server = grpc.server(futures.ThreadPoolExecutor(max_workers=4))
@@ -162,6 +171,11 @@ class Server:
         for i in range(6):
             self.__send_data(res, index, log)
 
+    def send(self):
+        while True:
+            req = self.send_q.get()
+            self.__send_data(res=req.res, request_id=req.request_id, log=req.log)
+
     def __send_data(self, res, request_id, log):
         target_port = 'localhost:' + str(self.aim_port)
         with grpc.insecure_channel(target_port) as channel:
@@ -173,11 +187,11 @@ class Server:
 
     def run(self):
         t1 = threading.Thread(target=self.__server)
-        # t = threading.Thread(target=self.test)
-        # t.start()
         t2 = threading.Thread(target=self.__model)
+        # t3 = threading.Thread(target=self.send)
         t1.start()
         t2.start()
+        # t3.start()
 
 
 def main():
