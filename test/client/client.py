@@ -29,9 +29,6 @@ from multiprocessing import Process
 _ONE_DAY_IN_SECONDS = 60 * 60
 setproctitle.setproctitle("Client")
 
-# class req_log:
-#     def __init__(self):
-
 
 class S2C(pb2_grpc.S2CServicer):
     def __init__(self, queue):
@@ -137,8 +134,8 @@ class Client:
     def send_request(self):
         time.sleep(1)
         msg = self.__generate_Request()
-        for i in range(10000):
-            delayMs(100)
+        for i in range(10):
+            time.sleep(20*0.001)
             # 生成测试数据
             print("send request {}".format(i + 1))
             self.connect(i + 1, msg)

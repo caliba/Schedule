@@ -39,6 +39,21 @@ class F_Request:
         self.log = log
 
 
+class Worker:
+
+    def __init__(self, port, batch):
+        self.id = []
+        self.batch = batch
+        self.port = port
+        self.data = []
+        self.log = []
+        self.stub = None
+
+        target_port = 'localhost:' + str(self.port)
+        channel = grpc.insecure_channel(target_port)
+        self.stub = pb2_grpc.F2SStub(channel)
+
+
 class Request2S:
     def __init__(self, aim_port, request_id, bytes_img, index, log):
         self.aim_port = aim_port
@@ -62,7 +77,6 @@ class C2F(pb2_grpc.C2FServicer):
         request.log = request.log + str(mytime.get_latency_ms(request.timestamp)) + str("ms ")
         print(request.log)
         self.queue.put(request)
-        # self.grpc_time.append(mytime.get_latency_ms(request.timestamp)) # 存放client-frontend传送时间
         self.arrive_time.append(mytime.get_timestamp())  # 请求到达时间存放
         # print(request.log)
         # print(mytime.get_latency_ms(request.timestamp))
@@ -78,8 +92,9 @@ class Setup(pb2_grpc.SetupServicer):
         register workload config in frontend
     """
 
-    def __init__(self, dic, server_port, list_q, id_q, q_start, log_q,stub):
+    def __init__(self, dic, server_port, list_q, id_q, q_start, log_q, stub, worker):
         self.dic = dic
+        self.worker = worker
         self.stub = stub
         self.q_start = q_start
         self.log_q = log_q
@@ -88,6 +103,8 @@ class Setup(pb2_grpc.SetupServicer):
         self.server_port = server_port
 
     def Setup_getmsg(self, request, context):
+        # self.worker.append(Worker(batch=request.batch,
+        #                                    port=request.port))
         self.dic[request.port] = request.batch
         self.server_port.append(request.port)
         target_port = 'localhost:' + str(request.port)
@@ -112,6 +129,7 @@ class Frontend:
         :param height: preprocess img height
         :param width: preprocess img width
         """
+        self.worker = []
         self.stub = []
         self.log_q = []  # 用于存放log
         self.grpc_time = []
@@ -135,7 +153,8 @@ class Frontend:
         server = grpc.server(futures.ThreadPoolExecutor(max_workers=4))
         pb2_grpc.add_C2FServicer_to_server(C2F(self.recv_q, self.arrive_time, self.log_q), server)
         pb2_grpc.add_SetupServicer_to_server(
-            Setup(self.config, self.server_port, self.list_q, self.id_q, self.q_start, self.log_q,self.stub),
+            Setup(self.config, self.server_port, self.list_q, self.id_q, self.q_start, self.log_q, self.stub,
+                  self.worker),
             server)
         port = '[::]:' + str(self.port)
         server.add_insecure_port(port)
@@ -184,6 +203,9 @@ class Frontend:
         while True:
             while not self.send_q.empty():
                 req = self.send_q.get()  # 获取分配的请求
+                # # add
+                # _worker = self.worker[index]
+
                 # 将 id img存入对应的id
                 self.id_q[index].append(req.request_id)
                 self.list_q[index].append(req.img)
@@ -211,8 +233,19 @@ class Frontend:
                 pass
             port = self.server_port[index]  # 获取worker的port
             batch = self.config[port]  # 获取 prefer batch
+            # add
+            # _worker = self.worker[index]
+            # _batch = _worker.batch
+
+
             while batch:
                 req = self.send_q.get()  # 从队列中取出一个请求
+                # # add
+                # _worker.data.append(req.img)
+                # _worker.log.append(req.log)
+                # _worker.id.append(req.request_id)
+
+
                 self.id_q[index].append(req.request_id)
                 self.log_q[index].append(req.log)
                 self.list_q[index].append(req.img)
@@ -220,40 +253,28 @@ class Frontend:
                     self.q_start[index] = time.time()
 
                 batch = batch - 1
-            # print(len(self.arrive_time))
+
             for i in range(len(self.log_q[index])):
-                # print(self.id_q[index][i])
-                # print(type(self.id_q[index][i]))
                 idx = self.id_q[index][i]  # 获取请求id
-                # print(id)
                 arrive_t = self.arrive_time[idx - 1]  #
                 res = mytime.get_latency_ms(arrive_t)
                 self.log_q[index][i] = str(self.log_q[index][i]) + " " + str(res) + "ms "
-            # print(index)
-            # print(self.log_q)
-            # print(len(self.log_q))
-            # print(self.log_q[0])
-            print(id(self.id_q[index]))
+            # print(id(self.id_q[index]))
+            # add
+            # print("sb")
+            # print(_worker.log)
+            # for log in _worker.log:
+            #     pass
 
             aim_port = copy.copy(self.server_port[index])
             bytes_img = copy.copy(self.list_q[index])
             _index = copy.copy(self.id_q[index])
             print(id(_index))
             log = copy.copy(self.log_q[index])
-            # print(log)
             r = Request2S(aim_port=aim_port, request_id=request_id, bytes_img=bytes_img,
                           index=_index, log=log)
             self.send_QQ.put(r)
 
-            # print(r.log)
-            # print(self.log_q[index])
-            # 发送请求
-            # t1 = threading.Thread(target=self.__send_req,
-            #                       kwargs={'aim_port': self.server_port[index], 'request_id': request_id,
-            #                               'bytes_img': self.list_q[index], 'index': self.id_q[index],
-            #                               'log': self.log_q[index]})
-            # t1.start()
-            # t1.join()
             # 发送完毕后再将发送队列清空
             self.list_q[index].clear()
             self.id_q[index].clear()

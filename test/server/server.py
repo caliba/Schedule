@@ -18,7 +18,7 @@ from lib.mstime import delayMs as delayMs
 import tensorflow as tf
 from tensorflow.keras.preprocessing.image import img_to_array
 from tensorflow.keras.preprocessing.image import load_img
-from models.classification import Classification as Models
+# from models.classification import Classification as Models
 import conf.proto.test_proto.test_pb2 as pb2
 import conf.proto.test_proto.test_pb2_grpc as pb2_grpc
 from queue import Queue
@@ -33,6 +33,9 @@ class Request2C:
         self.res = res
         self.log = log
         self.request_id = request_id
+
+
+
 
 
 class F2S(pb2_grpc.F2SServicer):
@@ -115,7 +118,7 @@ class Server:
         elif batchsize == 2:
             # 2 40
             s = time.time()
-            delayMs(40)  # 延迟40ms
+            time.sleep(40 * 0.001)  # 延迟40ms
             print("batchsize = 2")
             latency = (time.time() - s) * 1000
         elif batchsize == 4:
