@@ -72,6 +72,7 @@ class Server:
         self.aim_port = aimport
         self.queue = Queue()
         self.send_q = Queue()
+        self.stub = None
 
         # send server config to frontend
         target_port = 'localhost:' + str(self.feport)
@@ -79,6 +80,10 @@ class Server:
             stub = pb2_grpc.SetupStub(channel)
             msg_send = pb2.Setup_Request(port=str(self.port), batch=self.batch)
             res = stub.Setup_getmsg(msg_send)
+        #
+        target_port = 'localhost:' + str(self.aim_port)
+        channel = grpc.insecure_channel(target_port)
+        self.stub = pb2_grpc.S2CStub(channel)
 
     def __load_model(self):
         # 模型加载时间为 4s
@@ -147,9 +152,8 @@ class Server:
             r = Request2C(res=res_list, request_id=request_id, log=reqs.log)
             self.send_q.put(r)
 
-
     def __server(self):
-        server = grpc.server(futures.ThreadPoolExecutor(max_workers=4))
+        server = grpc.server(futures.ThreadPoolExecutor(max_workers=100))
         pb2_grpc.add_F2SServicer_to_server(F2S(self.queue, self.arrive_t), server)
         port = '[::]:' + str(self.port)
         server.add_insecure_port(port)
@@ -174,24 +178,33 @@ class Server:
     def send(self):
         while True:
             req = self.send_q.get()
+
             self.__send_data(res=req.res, request_id=req.request_id, log=req.log)
+            # self.queue.get()
+            # mytime.delayMs(40)
+            # time.sleep(0.5)
+            # self.__send_data(res=1, request_id=2, log=3)
 
     def __send_data(self, res, request_id, log):
-        target_port = 'localhost:' + str(self.aim_port)
-        with grpc.insecure_channel(target_port) as channel:
-            stub = pb2_grpc.S2CStub(channel)
-            msg_send = pb2.S2C_Request(res=res, index=request_id, log=log, timestamp=mytime.get_timestamp())
-            st = time.time()
-            stub.S2C_getmsg(msg_send)
-            print("sever to client{:.3f}ms".format((time.time() - st) * 1000))
+        # target_port = 'localhost:' + str(self.aim_port)
+        # res = ["test1", "test2"]
+        # request_id = [1, 2]
+        # log = ["request_id 91 1.558ms  23.225ms  1.457 ms 40.16 ms  21.156 ms",
+        #        "request_id 91 1.558ms  23.225ms  1.457 ms 40.16 ms  21.156 ms"]
+        # with grpc.insecure_channel(target_port) as channel:
+        #     stub = pb2_grpc.S2CStub(channel)
+        msg_send = pb2.S2C_Request(res=res, index=request_id, log=log, timestamp=mytime.get_timestamp())
+        st = time.time()
+        self.stub.S2C_getmsg(msg_send)
+        print("sever to client{:.3f}ms".format((time.time() - st) * 1000))
 
     def run(self):
         t1 = threading.Thread(target=self.__server)
         t2 = threading.Thread(target=self.__model)
-        # t3 = threading.Thread(target=self.send)
+        t3 = threading.Thread(target=self.send)
         t1.start()
         t2.start()
-        # t3.start()
+        t3.start()
 
 
 def main():

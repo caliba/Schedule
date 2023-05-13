@@ -24,6 +24,7 @@ import lib.mstime as mytime
 import conf.proto.test_proto.test_pb2 as pb2
 import conf.proto.test_proto.test_pb2_grpc as pb2_grpc
 from queue import Queue
+from multiprocessing import Process
 
 _ONE_DAY_IN_SECONDS = 60 * 60
 setproctitle.setproctitle("Client")
@@ -63,13 +64,19 @@ class Client:
         self.aim_port = aimport  # 靶机地址
         self.port = port  # 本机地址
         self.recv_q = Queue()  # 接收请求的队列
+        self.stub = None
+
+        target_port = 'localhost:' + str(self.aim_port)
+        channel = grpc.insecure_channel(target_port)
+        # with grpc.insecure_channel(target_port) as channel:
+        self.stub = pb2_grpc.C2FStub(channel)
 
     def server_run(self):
         """
             启动Client接收端，默认端口是50000端口
         :return:
         """
-        server = grpc.server(futures.ThreadPoolExecutor(max_workers=4))
+        server = grpc.server(futures.ThreadPoolExecutor(max_workers=100))
         pb2_grpc.add_S2CServicer_to_server(S2C(self.recv_q), server)
         port = '[::]:' + str(self.port)
         server.add_insecure_port(port)
@@ -113,25 +120,25 @@ class Client:
                img： sd
         :return:
         """
-        target_port = 'localhost:' + str(self.aim_port)
-        with grpc.insecure_channel(target_port) as channel:
-            stub = pb2_grpc.C2FStub(channel)
-            log = "request_id "+ str(msg_index)+" "
-            msg_send = pb2.C2F_Request(image=msg, request_id=msg_index, timestamp=mytime.get_timestamp(),log=log)
+        # target_port = 'localhost:' + str(self.aim_port)
+        # with grpc.insecure_channel(target_port) as channel:
+        #     stub = pb2_grpc.C2FStub(channel)
+        log = "request_id "+ str(msg_index)+" "
+        msg_send = pb2.C2F_Request(image=msg, request_id=msg_index, timestamp=mytime.get_timestamp(),log=log)
 
-            r = Request(time.time())
-            self.latency[msg_index] = r  # 保存每个请求的发送时间
-            # st = time.time()
-            stub.C2F_getmsg(msg_send)
-            # print("send request time {:.3f} ms".format(1000 * (time.time() - st)))
-            # print(response.flag)
-            #12322
+        r = Request(time.time())
+        self.latency[msg_index] = r  # 保存每个请求的发送时间
+        # st = time.time()
+        self.stub.C2F_getmsg(msg_send)
+        # print("send request time {:.3f} ms".format(1000 * (time.time() - st)))
+        # print(response.flag)
+
 
     def send_request(self):
-        time.sleep(2)
+        time.sleep(1)
         msg = self.__generate_Request()
         for i in range(10000):
-            delayMs(20)
+            delayMs(100)
             # 生成测试数据
             print("send request {}".format(i + 1))
             self.connect(i + 1, msg)
@@ -155,12 +162,14 @@ class Client:
                 count = count + 1
 
     def run(self):
+        # p = Process(target=self.send_request)
+        # p.start()
         t1 = threading.Thread(target=self.send_request)
-        # t2 = threading.Thread(target=self.server_run)
-        # t3 = threading.Thread(target=self.__parse_result)
+        t2 = threading.Thread(target=self.server_run)
+        t3 = threading.Thread(target=self.__parse_result)
         t1.start()
-        # t2.start()
-        # t3.start()
+        t2.start()
+        t3.start()
 
 
 def main():

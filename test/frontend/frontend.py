@@ -78,8 +78,9 @@ class Setup(pb2_grpc.SetupServicer):
         register workload config in frontend
     """
 
-    def __init__(self, dic, server_port, list_q, id_q, q_start, log_q):
+    def __init__(self, dic, server_port, list_q, id_q, q_start, log_q,stub):
         self.dic = dic
+        self.stub = stub
         self.q_start = q_start
         self.log_q = log_q
         self.list_q = list_q
@@ -89,6 +90,11 @@ class Setup(pb2_grpc.SetupServicer):
     def Setup_getmsg(self, request, context):
         self.dic[request.port] = request.batch
         self.server_port.append(request.port)
+        target_port = 'localhost:' + str(request.port)
+        channel = grpc.insecure_channel(target_port)
+        # with grpc.insecure_channel(target_port) as channel:
+        stub = pb2_grpc.F2SStub(channel)
+        self.stub.append(stub)
         self.list_q.append([])
         self.log_q.append([])
         self.q_start.append(0)
@@ -106,6 +112,7 @@ class Frontend:
         :param height: preprocess img height
         :param width: preprocess img width
         """
+        self.stub = []
         self.log_q = []  # 用于存放log
         self.grpc_time = []
         self.barrier = barrier
@@ -128,7 +135,7 @@ class Frontend:
         server = grpc.server(futures.ThreadPoolExecutor(max_workers=4))
         pb2_grpc.add_C2FServicer_to_server(C2F(self.recv_q, self.arrive_time, self.log_q), server)
         pb2_grpc.add_SetupServicer_to_server(
-            Setup(self.config, self.server_port, self.list_q, self.id_q, self.q_start, self.log_q),
+            Setup(self.config, self.server_port, self.list_q, self.id_q, self.q_start, self.log_q,self.stub),
             server)
         port = '[::]:' + str(self.port)
         server.add_insecure_port(port)
@@ -288,18 +295,18 @@ class Frontend:
             self.__send_req(req.aim_port, req.request_id, req.bytes_img, req.index, req.log)
 
     def __send_req(self, aim_port, request_id, bytes_img, index, log):
-        target_port = 'localhost:' + str(aim_port)
+        # target_port = 'localhost:' + str(aim_port)
         # print("send")
         # print(log)
-        with grpc.insecure_channel(target_port) as channel:
-            stub = pb2_grpc.F2SStub(channel)
-
-            msg_send = pb2.F2S_Request(request_id=request_id, size=self.width, image=bytes_img, index=index,
-                                       timestamp=mytime.get_timestamp(), log=log)
-            send_time = time.time()
-            response = stub.F2S_getmsg(msg_send)
-            print(response)
-            print("frontend to server time is {:.3f}".format(1000 * (time.time() - send_time)))
+        # with grpc.insecure_channel(target_port) as channel:
+        #     stub = pb2_grpc.F2SStub(channel)
+        stub = self.stub[0]
+        msg_send = pb2.F2S_Request(request_id=request_id, size=self.width, image=bytes_img, index=index,
+                                   timestamp=mytime.get_timestamp(), log=log)
+        send_time = time.time()
+        response = stub.F2S_getmsg(msg_send)
+        print(response)
+        print("frontend to server time is {:.3f}".format(1000 * (time.time() - send_time)))
 
     def run(self):
 
