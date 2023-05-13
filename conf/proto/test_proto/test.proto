@@ -1,25 +1,87 @@
-/*
- */
 syntax = "proto3";
-
-service Test {
-  rpc Test_Getmsg(Test_Request) returns (Test_Response){}
+// service client to frontend
+service C2F{
+  rpc C2F_getmsg(C2F_Request) returns (C2F_Response){}
 }
 
+message Timestamp{
+  int64 seconds = 1;
+  int32 microseconds = 2;
+}
 
-
-message Test_Request{
-  repeated int32 number = 1;
-  message Image{
-    int32 height = 1;
-    int32 width = 2;
-    bytes img = 3;
+message  C2F_Request{
+  int32 request_id = 1; // 请求id
+  message Image {
+    int32 height = 1; // 原始图片的高
+    int32 width = 2; // 原始图片的宽
+    bytes byte_image = 3; // bytes 图片
   }
-  repeated Image image = 2;
+  Image image = 2;
+  Timestamp timestamp = 3; // 发送时间戳
+  string log = 4;
 }
 
+message C2F_Response{
+  bool flag = 1; // 是否正确接受到请求
+}
 
+// service frontend to server
+service F2S{
+  rpc F2S_getmsg(F2S_Request) returns (F2S_Response){}
+}
+
+message F2S_Request{
+  int32 request_id = 1; // 请求id
+  int32 size = 2; // 图片大小 a*a*3
+  repeated bytes image = 3; // 图片
+  repeated int32 index = 4; // 一个batch中所有请求的序号
+  Timestamp timestamp = 5; // 发送时间戳
+  repeated string log =6;
+}
+
+message F2S_Response{
+  bool flag = 1;
+}
+
+// service server to client
+service S2C{
+  rpc S2C_getmsg(S2C_Request) returns (S2C_Response){}
+}
+
+message S2C_Request{
+  repeated string res = 1; // 请求预测的结果数组
+  repeated int32 index = 2; // 请求的序号
+  repeated string log = 3;
+  Timestamp timestamp = 4;
+}
+
+message S2C_Response{
+  bool flag = 1;
+}
+
+// model config service F2S
+service Setup{
+  rpc Setup_getmsg(Setup_Request) returns (Setup_Response){}
+}
+
+message Setup_Request{
+  string port = 1; // server的地址
+  int32 batch = 2; // server prefer的batch
+}
+
+message Setup_Response{
+  bool flag = 1;
+}
+
+// test msg
+service Test{
+  rpc Test_getmsg(Test_Request) returns (Test_Response){}
+}
+message Test_Request{
+  int32 msg = 1;
+  bytes img = 2;
+}
 
 message Test_Response{
-  bool response = 1;
+  bool flag = 1;
 }

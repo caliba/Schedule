@@ -20,19 +20,20 @@ from concurrent import futures
 import numpy as np
 import cv2  # BGR
 import math
-
-import conf.proto.msg_proto.msg_pb2 as pb2
-import conf.proto.msg_proto.msg_pb2_grpc as pb2_grpc
+import conf.proto.test_proto.test_pb2 as pb2
+import conf.proto.test_proto.test_pb2_grpc as pb2_grpc
 from queue import Queue
+import lib.mstime as mytime
 
 _ONE_DAY_IN_SECONDS = 60 * 60
 
 
 class F_Request:
 
-    def __init__(self, img, request_id):
+    def __init__(self, img, request_id, log):
         self.img = img
         self.request_id = request_id
+        self.log = log
 
 
 class C2F(pb2_grpc.C2FServicer):
@@ -40,11 +41,19 @@ class C2F(pb2_grpc.C2FServicer):
         grpc client to frontend
     """
 
-    def __init__(self, queue):
+    def __init__(self, queue, arrive_time, grpc_time):
         self.queue = queue
+        self.grpc_time = grpc_time
+        self.arrive_time = arrive_time
 
     def C2F_getmsg(self, request, context):
+        request.log = request.log + str(mytime.get_latency_ms(request.timestamp)) + str("ms ")
+        print(request.log)
         self.queue.put(request)
+        # self.grpc_time.append(mytime.get_latency_ms(request.timestamp)) # 存放client-frontend传送时间
+        self.arrive_time.append(mytime.get_timestamp())  # 请求到达时间存放
+        # print(request.log)
+        # print(mytime.get_latency_ms(request.timestamp))
         # print(request.request_id)
         # print("send time {}".format(request.send_time))
         # print("time is {}".format(time.time()))
@@ -57,9 +66,10 @@ class Setup(pb2_grpc.SetupServicer):
         register workload config in frontend
     """
 
-    def __init__(self, dic, server_port, list_q, id_q, q_start):
+    def __init__(self, dic, server_port, list_q, id_q, q_start, log_q):
         self.dic = dic
         self.q_start = q_start
+        self.log_q = log_q
         self.list_q = list_q
         self.id_q = id_q
         self.server_port = server_port
@@ -68,6 +78,7 @@ class Setup(pb2_grpc.SetupServicer):
         self.dic[request.port] = request.batch
         self.server_port.append(request.port)
         self.list_q.append([])
+        self.log_q.append([])
         self.q_start.append(0)
         self.id_q.append([])
         print("Frontend target server config is {}".format(self.dic))
@@ -83,7 +94,10 @@ class Frontend:
         :param height: preprocess img height
         :param width: preprocess img width
         """
+        self.log_q = []  # 用于存放log
+        self.grpc_time = []
         self.barrier = barrier
+        self.arrive_time = []  # 用与存放每个请求到达的时间
         self.policy = policy
         self.server_port = []
         self.config = {}  # port-->batch对应关系
@@ -99,9 +113,10 @@ class Frontend:
 
     def __server(self):
         server = grpc.server(futures.ThreadPoolExecutor(max_workers=4))
-        pb2_grpc.add_C2FServicer_to_server(C2F(self.recv_q), server)
-        pb2_grpc.add_SetupServicer_to_server(Setup(self.config, self.server_port, self.list_q, self.id_q, self.q_start),
-                                             server)
+        pb2_grpc.add_C2FServicer_to_server(C2F(self.recv_q, self.arrive_time, self.log_q), server)
+        pb2_grpc.add_SetupServicer_to_server(
+            Setup(self.config, self.server_port, self.list_q, self.id_q, self.q_start, self.log_q),
+            server)
         port = '[::]:' + str(self.port)
         server.add_insecure_port(port)
         server.start()
@@ -116,6 +131,7 @@ class Frontend:
 
     def __preprocess(self, req):
         request_id = req.request_id  # 请求序号
+        log = req.log  # 请求log
         h = req.image.height
         w = req.image.width
         img_bytes = req.image.byte_image
@@ -126,14 +142,14 @@ class Frontend:
         # pic to bytes
         img = img.tobytes()
         # 处理一张图片，其返回值是一个类，包含图片信息和请求id
-        return F_Request(img=img, request_id=request_id)
+        return F_Request(img=img, request_id=request_id, log=log)
 
     def __data_save(self):
         print("data save is running -- ")
         while True:
-            while not self.recv_q.empty():
-                req = self.recv_q.get()
-                self.send_q.put(self.__preprocess(req))
+            mytime.delayMs(1)
+            req = self.recv_q.get()
+            self.send_q.put(self.__preprocess(req))
 
     def __schedule(self):
         if self.policy == "RR":
@@ -151,6 +167,7 @@ class Frontend:
                 # 将 id img存入对应的id
                 self.id_q[index].append(req.request_id)
                 self.list_q[index].append(req.img)
+                self.log_q[index].append(req.log)
                 print(" index {} len {}".format(index, len(self.list_q[index])))
                 if len(self.list_q[index]) == self.config[self.server_port[index]]:
                     aim_port = self.server_port[index]
@@ -170,27 +187,43 @@ class Frontend:
         index = 0
         request_id = 1
         while True:
-            while not self.send_q.empty():
-                port = self.server_port[index]
-                batch = self.config[port]
-                while batch:
-                    req = self.send_q.get()
-                    self.id_q[index].append(req.request_id)
-                    self.list_q[index].append(req.img)
-                    if len(self.list_q[index]) == 1:  # 如果这个请求是第一个请求
-                        self.q_start[index] = time.time()
+            while len(self.server_port) == 0:
+                pass
+            port = self.server_port[index]  # 获取worker的port
+            batch = self.config[port]  # 获取 prefer batch
+            while batch:
+                req = self.send_q.get()  # 从队列中取出一个请求
+                self.id_q[index].append(req.request_id)
+                self.log_q[index].append(req.log)
+                self.list_q[index].append(req.img)
+                if len(self.list_q[index]) == 1:  # 如果这个请求是第一个请求
+                    self.q_start[index] = time.time()
 
-                    batch = batch - 1
-
-                t1 = threading.Thread(target=self.__send_req,
-                                      kwargs={'aim_port': self.server_port[index], 'request_id': request_id,
-                                              'bytes_img': self.list_q[index], 'index': self.id_q[index]})
-                t1.start()
-                t1.join()
-                self.list_q[index].clear()
-                self.id_q[index].clear()
-                self.q_start[index] = 0  # 0表明这个队列是空的
-                index = (index + 1) % len(self.config)
+                batch = batch - 1
+            # print(len(self.arrive_time))
+            for i in range(len(self.log_q[index])):
+                # print(self.id_q[index][i])
+                # print(type(self.id_q[index][i]))
+                id = self.id_q[index][i]  # 获取请求id
+                # print(id)
+                arrive_t = self.arrive_time[id - 1]  #
+                res = mytime.get_latency_ms(arrive_t)
+                self.log_q[index][i] = str(self.log_q[index][i]) + " " + str(res) + "ms "
+            # print(self.log_q[index])
+            # 发送请求
+            t1 = threading.Thread(target=self.__send_req,
+                                  kwargs={'aim_port': self.server_port[index], 'request_id': request_id,
+                                          'bytes_img': self.list_q[index], 'index': self.id_q[index],
+                                          'log': self.log_q[index]})
+            t1.start()
+            t1.join()
+            # 发送完毕后再将发送队列清空
+            self.list_q[index].clear()
+            self.id_q[index].clear()
+            self.log_q[index].clear()
+            self.q_start[index] = 0
+            # 寻找下一个worker
+            index = (index + 1) % len(self.config)
 
     def __Moniter(self):
         print("Frontend guard moniter is running ")
@@ -204,7 +237,8 @@ class Frontend:
                             print("提前send,{}".format(self.id_q[index]))
                             t1 = threading.Thread(target=self.__send_req,
                                                   kwargs={'aim_port': self.server_port[index], 'request_id': 1,
-                                                          'bytes_img': self.list_q[index], 'index': self.id_q[index]})
+                                                          'bytes_img': self.list_q[index], 'index': self.id_q[index],
+                                                          'log': self.log_q[index]})
                             t1.start()
                             t1.join()
                             self.list_q[index].clear()
@@ -216,25 +250,30 @@ class Frontend:
     def __guard(self):
         pass
 
-    def __send_req(self, aim_port, request_id, bytes_img, index):
+    def __send_req(self, aim_port, request_id, bytes_img, index, log):
         target_port = 'localhost:' + str(aim_port)
+        # print("send")
+        print(log)
         with grpc.insecure_channel(target_port) as channel:
             stub = pb2_grpc.F2SStub(channel)
 
-            msg_send = pb2.F2S_Request(request_id=request_id, size=self.width, image=bytes_img, index=index)
+
+            msg_send = pb2.F2S_Request(request_id=request_id, size=self.width, image=bytes_img, index=index,
+                                       timestamp=mytime.get_timestamp(), log=log)
             send_time = time.time()
             response = stub.F2S_getmsg(msg_send)
-            print("frontend to server time is {:.3f}".format(1000*(time.time()-send_time)))
+            print(response)
+            print("frontend to server time is {:.3f}".format(1000 * (time.time() - send_time)))
 
     def run(self):
 
         t1 = threading.Thread(target=self.__server)  # 启动服务端
-        # t2 = threading.Thread(target=self.__data_save)  # 启动转发端
-        # t3 = threading.Thread(target=self.__schedule)  # 启动发送端
+        t2 = threading.Thread(target=self.__data_save)  # 启动转发端
+        t3 = threading.Thread(target=self.__schedule)  # 启动发送端
         # t4 = threading.Thread(target=self.__Moniter)
         t1.start()
-        # t2.start()
-        # t3.start()
+        t2.start()
+        t3.start()
         # t4.start()
 
 
