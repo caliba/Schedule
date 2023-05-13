@@ -110,7 +110,7 @@ class Client:
         """
         向frontend发送请求，frontend的端口为50001
         :param msg_index:
-               img：
+               img： sd
         :return:
         """
         target_port = 'localhost:' + str(self.aim_port)
