@@ -125,6 +125,7 @@ class Client:
             stub.C2F_getmsg(msg_send)
             # print("send request time {:.3f} ms".format(1000 * (time.time() - st)))
             # print(response.flag)
+            #12322
 
     def send_request(self):
         time.sleep(2)
