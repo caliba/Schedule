@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\ntest.proto\"2\n\tTimestamp\x12\x0f\n\x07seconds\x18\x01 \x01(\x03\x12\x14\n\x0cmicroseconds\x18\x02 \x01(\x05\"\xac\x01\n\x0b\x43\x32\x46_Request\x12\x12\n\nrequest_id\x18\x01 \x01(\x05\x12!\n\x05image\x18\x02 \x01(\x0b\x32\x12.C2F_Request.Image\x12\x1d\n\ttimestamp\x18\x03 \x01(\x0b\x32\n.Timestamp\x12\x0b\n\x03log\x18\x04 \x01(\t\x1a:\n\x05Image\x12\x0e\n\x06height\x18\x01 \x01(\x05\x12\r\n\x05width\x18\x02 \x01(\x05\x12\x12\n\nbyte_image\x18\x03 \x01(\x0c\"\x1c\n\x0c\x43\x32\x46_Response\x12\x0c\n\x04\x66lag\x18\x01 \x01(\x08\"y\n\x0b\x46\x32S_Request\x12\x12\n\nrequest_id\x18\x01 \x01(\x05\x12\x0c\n\x04size\x18\x02 \x01(\x05\x12\r\n\x05image\x18\x03 \x03(\x0c\x12\r\n\x05index\x18\x04 \x03(\x05\x12\x1d\n\ttimestamp\x18\x05 \x01(\x0b\x32\n.Timestamp\x12\x0b\n\x03log\x18\x06 \x03(\t\"\x1c\n\x0c\x46\x32S_Response\x12\x0c\n\x04\x66lag\x18\x01 \x01(\x08\"U\n\x0bS2C_Request\x12\x0b\n\x03res\x18\x01 \x03(\t\x12\r\n\x05index\x18\x02 \x03(\x05\x12\x0b\n\x03log\x18\x03 \x03(\t\x12\x1d\n\ttimestamp\x18\x04 \x01(\x0b\x32\n.Timestamp\"\x1c\n\x0cS2C_Response\x12\x0c\n\x04\x66lag\x18\x01 \x01(\x08\",\n\rSetup_Request\x12\x0c\n\x04port\x18\x01 \x01(\t\x12\r\n\x05\x62\x61tch\x18\x02 \x01(\x05\"\x1e\n\x0eSetup_Response\x12\x0c\n\x04\x66lag\x18\x01 \x01(\x08\"(\n\x0cTest_Request\x12\x0b\n\x03msg\x18\x01 \x01(\x05\x12\x0b\n\x03img\x18\x02 \x01(\x0c\"\x1d\n\rTest_Response\x12\x0c\n\x04\x66lag\x18\x01 \x01(\x08\x32\x32\n\x03\x43\x32\x46\x12+\n\nC2F_getmsg\x12\x0c.C2F_Request\x1a\r.C2F_Response\"\x00\x32\x32\n\x03\x46\x32S\x12+\n\nF2S_getmsg\x12\x0c.F2S_Request\x1a\r.F2S_Response\"\x00\x32\x32\n\x03S2C\x12+\n\nS2C_getmsg\x12\x0c.S2C_Request\x1a\r.S2C_Response\"\x00\x32:\n\x05Setup\x12\x31\n\x0cSetup_getmsg\x12\x0e.Setup_Request\x1a\x0f.Setup_Response\"\x00\x32\x36\n\x04Test\x12.\n\x0bTest_getmsg\x12\r.Test_Request\x1a\x0e.Test_Response\"\x00\x62\x06proto3'
+  serialized_pb=b'\n\ntest.proto\"2\n\tTimestamp\x12\x0f\n\x07seconds\x18\x01 \x01(\x03\x12\x14\n\x0cmicroseconds\x18\x02 \x01(\x05\"\xac\x01\n\x0b\x43\x32\x46_Request\x12\x12\n\nrequest_id\x18\x01 \x01(\x05\x12!\n\x05image\x18\x02 \x01(\x0b\x32\x12.C2F_Request.Image\x12\x1d\n\ttimestamp\x18\x03 \x01(\x0b\x32\n.Timestamp\x12\x0b\n\x03log\x18\x04 \x01(\t\x1a:\n\x05Image\x12\x0e\n\x06height\x18\x01 \x01(\x05\x12\r\n\x05width\x18\x02 \x01(\x05\x12\x12\n\nbyte_image\x18\x03 \x01(\x0c\"\x1c\n\x0c\x43\x32\x46_Response\x12\x0c\n\x04\x66lag\x18\x01 \x01(\x08\"\x98\x01\n\x0b\x46\x32S_Request\x12\x12\n\nrequest_id\x18\x01 \x01(\x05\x12\x0c\n\x04size\x18\x02 \x01(\x05\x12\r\n\x05image\x18\x03 \x03(\x0c\x12\r\n\x05index\x18\x04 \x03(\x05\x12\x1d\n\ttimestamp\x18\x05 \x01(\x0b\x32\n.Timestamp\x12\x0b\n\x03log\x18\x06 \x03(\t\x12\x1d\n\tsend_time\x18\x07 \x03(\x0b\x32\n.Timestamp\"\x1c\n\x0c\x46\x32S_Response\x12\x0c\n\x04\x66lag\x18\x01 \x01(\x08\"U\n\x0bS2C_Request\x12\x0b\n\x03res\x18\x01 \x03(\t\x12\r\n\x05index\x18\x02 \x03(\x05\x12\x0b\n\x03log\x18\x03 \x03(\t\x12\x1d\n\ttimestamp\x18\x04 \x01(\x0b\x32\n.Timestamp\"\x1c\n\x0cS2C_Response\x12\x0c\n\x04\x66lag\x18\x01 \x01(\x08\",\n\rSetup_Request\x12\x0c\n\x04port\x18\x01 \x01(\t\x12\r\n\x05\x62\x61tch\x18\x02 \x01(\x05\"\x1e\n\x0eSetup_Response\x12\x0c\n\x04\x66lag\x18\x01 \x01(\x08\"(\n\x0cTest_Request\x12\x0b\n\x03msg\x18\x01 \x01(\x05\x12\x0b\n\x03img\x18\x02 \x01(\x0c\"\x1d\n\rTest_Response\x12\x0c\n\x04\x66lag\x18\x01 \x01(\x08\x32\x32\n\x03\x43\x32\x46\x12+\n\nC2F_getmsg\x12\x0c.C2F_Request\x1a\r.C2F_Response\"\x00\x32\x32\n\x03\x46\x32S\x12+\n\nF2S_getmsg\x12\x0c.F2S_Request\x1a\r.F2S_Response\"\x00\x32\x32\n\x03S2C\x12+\n\nS2C_getmsg\x12\x0c.S2C_Request\x1a\r.S2C_Response\"\x00\x32:\n\x05Setup\x12\x31\n\x0cSetup_getmsg\x12\x0e.Setup_Request\x1a\x0f.Setup_Response\"\x00\x32\x36\n\x04Test\x12.\n\x0bTest_getmsg\x12\r.Test_Request\x1a\x0e.Test_Response\"\x00\x62\x06proto3'
 )
 
 
@@ -244,6 +244,13 @@ _F2S_REQUEST = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='send_time', full_name='F2S_Request.send_time', index=6,
+      number=7, type=11, cpp_type=10, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
   ],
   extensions=[
   ],
@@ -256,8 +263,8 @@ _F2S_REQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=271,
-  serialized_end=392,
+  serialized_start=272,
+  serialized_end=424,
 )
 
 
@@ -288,8 +295,8 @@ _F2S_RESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=394,
-  serialized_end=422,
+  serialized_start=426,
+  serialized_end=454,
 )
 
 
@@ -341,8 +348,8 @@ _S2C_REQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=424,
-  serialized_end=509,
+  serialized_start=456,
+  serialized_end=541,
 )
 
 
@@ -373,8 +380,8 @@ _S2C_RESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=511,
-  serialized_end=539,
+  serialized_start=543,
+  serialized_end=571,
 )
 
 
@@ -412,8 +419,8 @@ _SETUP_REQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=541,
-  serialized_end=585,
+  serialized_start=573,
+  serialized_end=617,
 )
 
 
@@ -444,8 +451,8 @@ _SETUP_RESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=587,
-  serialized_end=617,
+  serialized_start=619,
+  serialized_end=649,
 )
 
 
@@ -483,8 +490,8 @@ _TEST_REQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=619,
-  serialized_end=659,
+  serialized_start=651,
+  serialized_end=691,
 )
 
 
@@ -515,14 +522,15 @@ _TEST_RESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=661,
-  serialized_end=690,
+  serialized_start=693,
+  serialized_end=722,
 )
 
 _C2F_REQUEST_IMAGE.containing_type = _C2F_REQUEST
 _C2F_REQUEST.fields_by_name['image'].message_type = _C2F_REQUEST_IMAGE
 _C2F_REQUEST.fields_by_name['timestamp'].message_type = _TIMESTAMP
 _F2S_REQUEST.fields_by_name['timestamp'].message_type = _TIMESTAMP
+_F2S_REQUEST.fields_by_name['send_time'].message_type = _TIMESTAMP
 _S2C_REQUEST.fields_by_name['timestamp'].message_type = _TIMESTAMP
 DESCRIPTOR.message_types_by_name['Timestamp'] = _TIMESTAMP
 DESCRIPTOR.message_types_by_name['C2F_Request'] = _C2F_REQUEST
@@ -631,8 +639,8 @@ _C2F = _descriptor.ServiceDescriptor(
   index=0,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=692,
-  serialized_end=742,
+  serialized_start=724,
+  serialized_end=774,
   methods=[
   _descriptor.MethodDescriptor(
     name='C2F_getmsg',
@@ -657,8 +665,8 @@ _F2S = _descriptor.ServiceDescriptor(
   index=1,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=744,
-  serialized_end=794,
+  serialized_start=776,
+  serialized_end=826,
   methods=[
   _descriptor.MethodDescriptor(
     name='F2S_getmsg',
@@ -683,8 +691,8 @@ _S2C = _descriptor.ServiceDescriptor(
   index=2,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=796,
-  serialized_end=846,
+  serialized_start=828,
+  serialized_end=878,
   methods=[
   _descriptor.MethodDescriptor(
     name='S2C_getmsg',
@@ -709,8 +717,8 @@ _SETUP = _descriptor.ServiceDescriptor(
   index=3,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=848,
-  serialized_end=906,
+  serialized_start=880,
+  serialized_end=938,
   methods=[
   _descriptor.MethodDescriptor(
     name='Setup_getmsg',
@@ -735,8 +743,8 @@ _TEST = _descriptor.ServiceDescriptor(
   index=4,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=908,
-  serialized_end=962,
+  serialized_start=940,
+  serialized_end=994,
   methods=[
   _descriptor.MethodDescriptor(
     name='Test_getmsg',

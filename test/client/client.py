@@ -24,7 +24,6 @@ import lib.mstime as mytime
 import conf.proto.test_proto.test_pb2 as pb2
 import conf.proto.test_proto.test_pb2_grpc as pb2_grpc
 from queue import Queue
-from multiprocessing import Process
 
 _ONE_DAY_IN_SECONDS = 60 * 60
 setproctitle.setproctitle("Client")
@@ -37,13 +36,12 @@ class S2C(pb2_grpc.S2CServicer):
     def S2C_getmsg(self, request, context):
         for i in range(len(request.log)):
             request.log[i] = request.log[i] + " " + str(mytime.get_latency_ms(request.timestamp)) + " ms "
-        # for log in request.log:
         print(request.log)
         self.q.put(request)
-        # print(request.index)
         return pb2.S2C_Response(flag=True)
 
 
+# request Client send to Frontend
 class Request:
     def __init__(self, send_time):
         self.send_time = send_time
@@ -54,18 +52,17 @@ class Request:
 
 class Client:
 
-    def __init__(self, path, port=50000, aimport=50001, SLOs=1000):
+    def __init__(self, path, port=50000, aim_port=50001, SLOs=1000):
         self.path = path
         self.slos = SLOs
         self.latency = {}  # key:request id
-        self.aim_port = aimport  # 靶机地址
+        self.aim_port = aim_port  # 靶机地址
         self.port = port  # 本机地址
         self.recv_q = Queue()  # 接收请求的队列
         self.stub = None
 
         target_port = 'localhost:' + str(self.aim_port)
         channel = grpc.insecure_channel(target_port)
-        # with grpc.insecure_channel(target_port) as channel:
         self.stub = pb2_grpc.C2FStub(channel)
 
     def server_run(self):
@@ -111,56 +108,37 @@ class Client:
         return img
 
     def connect(self, msg_index, msg):
-        """
-        向frontend发送请求，frontend的端口为50001
-        :param msg_index:
-               img： sd
-        :return:
-        """
-        # target_port = 'localhost:' + str(self.aim_port)
-        # with grpc.insecure_channel(target_port) as channel:
-        #     stub = pb2_grpc.C2FStub(channel)
-        log = "request_id "+ str(msg_index)+" "
-        msg_send = pb2.C2F_Request(image=msg, request_id=msg_index, timestamp=mytime.get_timestamp(),log=log)
+        log = "request_id " + str(msg_index) + " "
+        msg_send = pb2.C2F_Request(image=msg, request_id=msg_index, timestamp=mytime.get_timestamp(), log=log,)
 
-        r = Request(time.time())
+        r = Request(mytime.get_timestamp())
         self.latency[msg_index] = r  # 保存每个请求的发送时间
-        # st = time.time()
         self.stub.C2F_getmsg(msg_send)
-        # print("send request time {:.3f} ms".format(1000 * (time.time() - st)))
-        # print(response.flag)
-
 
     def send_request(self):
         time.sleep(1)
         msg = self.__generate_Request()
         for i in range(10):
-            time.sleep(20*0.001)
+            time.sleep(20 * 0.001)
             # 生成测试数据
             print("send request {}".format(i + 1))
             self.connect(i + 1, msg)
 
     def __parse_result(self):
         print(" Client recieve part is loading")
-        """
-            Server -> Client msg
-                - index：表明request_id
-                - res：表明处理请求的id
-        """
         while True:
             reqs = self.recv_q.get()
             count = 0
             for r in reqs.index:
-                self.latency[r].recv_time = time.time()
+                self.latency[r].recv_time = mytime.get_timestamp()
                 self.latency[r].res = reqs.res[count]
-                self.latency[r].dur = self.latency[r].recv_time - self.latency[r].send_time
+                self.latency[r].dur = mytime.get_latency_ms(self.latency[r].send_time)
                 print("request id {}, res is {},inference time is {:.3f}ms".format(r, self.latency[r].res,
-                                                                                   1000 * self.latency[r].dur))
+                                                                                   self.latency[r].dur))
                 count = count + 1
 
     def run(self):
-        # p = Process(target=self.send_request)
-        # p.start()
+
         t1 = threading.Thread(target=self.send_request)
         t2 = threading.Thread(target=self.server_run)
         t3 = threading.Thread(target=self.__parse_result)
@@ -171,7 +149,7 @@ class Client:
 
 def main():
     file_path = '../../img/test01.jpg'
-    c = Client(port=50000, aimport=50001, path=file_path)
+    c = Client(port=50000, aim_port=50001, path=file_path)
     c.run()
 
 

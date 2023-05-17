@@ -37,6 +37,7 @@ message F2S_Request{
   repeated int32 index = 4; // 一个batch中所有请求的序号
   Timestamp timestamp = 5; // 发送时间戳
   repeated string log =6;
+  repeated Timestamp send_time = 7;
 }
 
 message F2S_Response{

@@ -18,13 +18,13 @@ from lib.mstime import delayMs as delayMs
 import tensorflow as tf
 from tensorflow.keras.preprocessing.image import img_to_array
 from tensorflow.keras.preprocessing.image import load_img
-# from models.classification import Classification as Models
 import conf.proto.test_proto.test_pb2 as pb2
 import conf.proto.test_proto.test_pb2_grpc as pb2_grpc
 from queue import Queue
 
 setproctitle.setproctitle("Server")
 _ONE_DAY_IN_SECONDS = 60 * 60
+_MS_TO_S = 0.001
 
 
 class Request2C:
@@ -35,9 +35,6 @@ class Request2C:
         self.request_id = request_id
 
 
-
-
-
 class F2S(pb2_grpc.F2SServicer):
 
     def __init__(self, queue, arrive_t):
@@ -45,20 +42,15 @@ class F2S(pb2_grpc.F2SServicer):
         self.arrive_t = arrive_t
 
     def F2S_getmsg(self, request, context):
-        # print(request.log)
         for i in range(len(request.log)):
             request.log[i] = request.log[i] + " " + str(mytime.get_latency_ms(request.timestamp)) + " ms "
-        # for log in request.log:
-        #     log = log + " "+ str(mytime.get_latency_ms(timestamp))+" ms "
         self.queue.put(request)
         self.arrive_t.put(mytime.get_timestamp())  # 获取当前时间戳
-        # print(request.log)
-        # print(request.index)
         return pb2.F2S_Response(flag=True)
 
 
 class Server:
-    def __init__(self, port, aimport, feport, model_name, batch=1):
+    def __init__(self, port, aimport, feport, model_name, profile, batch=1):
         """
 
         :param port: server port
@@ -66,10 +58,12 @@ class Server:
         :param feport:  frontend port
         :param batch:   server process batch
         """
-        self.model_name = model_name
-        self.arrive_t = Queue()
-        self.port = port
-        self.model = None
+        self.model_name = model_name  # 所使用的模型名称
+        self.SLO = 70 # SLOs 70ms
+        self.arrive_t = Queue()  # 到达队列
+        self.port = port  #
+        self.model = None # server加载何种模型
+        self.profile = profile # 模型的配置 batchsize -> duration(ms)
         self.batch = batch
         self.feport = feport
         self.aim_port = aimport
@@ -82,7 +76,7 @@ class Server:
         with grpc.insecure_channel(target_port) as channel:
             stub = pb2_grpc.SetupStub(channel)
             msg_send = pb2.Setup_Request(port=str(self.port), batch=self.batch)
-            res = stub.Setup_getmsg(msg_send)
+            stub.Setup_getmsg(msg_send)
         #
         target_port = 'localhost:' + str(self.aim_port)
         channel = grpc.insecure_channel(target_port)
@@ -91,7 +85,7 @@ class Server:
     def __load_model(self):
         # 模型加载时间为 4s
         s = time.time()
-        time.sleep(0.5)
+        # time.sleep(0.5)
         print("模型加载完成，用时 {:.3f}s".format(time.time() - s))
 
     def __data_parse(self, bytes_img, size):
@@ -113,22 +107,16 @@ class Server:
         latency = 0
         if batchsize == 1:
             # 1 15
-            delayMs(40)
-            time.sleep(latency / 1000)
+            time.sleep(25 * _MS_TO_S)
         elif batchsize == 2:
             # 2 40
-            s = time.time()
-            time.sleep(40 * 0.001)  # 延迟40ms
-            print("batchsize = 2")
-            latency = (time.time() - s) * 1000
+            time.sleep(40 * _MS_TO_S)  # 延迟40ms
         elif batchsize == 4:
             # 4 21
-            latency = random.gauss(21, 1)
-            time.sleep(latency / 1000)
+            pass
         elif batchsize == 8:
             # 8 34
-            latency = random.gauss(34, 1)
-            time.sleep(latency / 1000)
+            pass
 
         return latency
 
@@ -139,7 +127,14 @@ class Server:
         while True:
             # prepare image data
             reqs = self.queue.get()
-            # size = reqs.size
+            # 合理性检查
+            _batch = len(reqs.index) # prefer batch
+            for r in reqs.send_time:
+                tmp = mytime.get_latency_ms(r)
+                if tmp + self.profile[_batch] < self.SLO:
+                    print("Time Out")
+                    _batch = _batch - 1
+
             request_id = reqs.index
             res_list = []
             # batch = self.__parse_batch(reqs.image, size) # 数据预处理
@@ -183,23 +178,10 @@ class Server:
             req = self.send_q.get()
 
             self.__send_data(res=req.res, request_id=req.request_id, log=req.log)
-            # self.queue.get()
-            # mytime.delayMs(40)
-            # time.sleep(0.5)
-            # self.__send_data(res=1, request_id=2, log=3)
 
     def __send_data(self, res, request_id, log):
-        # target_port = 'localhost:' + str(self.aim_port)
-        # res = ["test1", "test2"]
-        # request_id = [1, 2]
-        # log = ["request_id 91 1.558ms  23.225ms  1.457 ms 40.16 ms  21.156 ms",
-        #        "request_id 91 1.558ms  23.225ms  1.457 ms 40.16 ms  21.156 ms"]
-        # with grpc.insecure_channel(target_port) as channel:
-        #     stub = pb2_grpc.S2CStub(channel)
         msg_send = pb2.S2C_Request(res=res, index=request_id, log=log, timestamp=mytime.get_timestamp())
-        st = time.time()
         self.stub.S2C_getmsg(msg_send)
-        print("sever to client{:.3f}ms".format((time.time() - st) * 1000))
 
     def run(self):
         t1 = threading.Thread(target=self.__server)
@@ -211,9 +193,10 @@ class Server:
 
 
 def main():
-    s = Server(port=50002, aimport=50000, feport=50001, model_name="VGG", batch=2)
-    # s2 = Server(port=50003, aimport=50000, feport=50001, model_name="VGG", batch=2)
-    # s2.run()
+    profile = {1: 25, 2: 40}
+    s = Server(port=50002, aimport=50000, feport=50001, model_name="VGG", batch=2, profile=profile)
+    s2 = Server(port=50003, aimport=50000, feport=50001, model_name="VGG", batch=2, profile=profile)
+    s2.run()
     s.run()
 
 
