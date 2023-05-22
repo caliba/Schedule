@@ -17,7 +17,6 @@ import time
 import grpc
 import numpy as np
 import cv2  # BGR
-from lib.mstime import delayMs as delayMs
 import math
 import threading
 import lib.mstime as mytime
@@ -25,6 +24,7 @@ import conf.proto.test_proto.test_pb2 as pb2
 import conf.proto.test_proto.test_pb2_grpc as pb2_grpc
 from queue import Queue
 
+_MS_TO_S = 0.001
 _ONE_DAY_IN_SECONDS = 60 * 60
 setproctitle.setproctitle("Client")
 
@@ -34,10 +34,13 @@ class S2C(pb2_grpc.S2CServicer):
         self.q = queue
 
     def S2C_getmsg(self, request, context):
-        for i in range(len(request.log)):
-            request.log[i] = request.log[i] + " " + str(mytime.get_latency_ms(request.timestamp)) + " ms "
-        print(request.log)
-        self.q.put(request)
+        for i in range(len(request.servermessage)):
+            request.servermessage[i].log = request.servermessage[i].log + " " + str(
+                mytime.get_latency_ms(request.servermessage[i].timestamp[-1])) + " ms "
+            request.servermessage[i].timestamp.append(mytime.get_timestamp())
+            print(request.servermessage[i].log)
+            # print(mytime.get_latency(request.servermessage[i].timestamp[0],request.servermessage[i].timestamp[-1]))
+        self.q.put(request.servermessage)
         return pb2.S2C_Response(flag=True)
 
 
@@ -50,11 +53,21 @@ class Request:
         self.res = None
 
 
+class Client_config:
+    def __init__(self, throughput=100):
+        self.throughput = throughput
+        self.send_req = 0
+        self.reci_req = 0
+
+
 class Client:
 
     def __init__(self, path, port=50000, aim_port=50001, SLOs=1000):
         self.path = path
+        self.request_id = 1
+        self.send_q = Queue()
         self.slos = SLOs
+        self.config = Client_config()
         self.latency = {}  # key:request id
         self.aim_port = aim_port  # 靶机地址
         self.port = port  # 本机地址
@@ -64,6 +77,8 @@ class Client:
         target_port = 'localhost:' + str(self.aim_port)
         channel = grpc.insecure_channel(target_port)
         self.stub = pb2_grpc.C2FStub(channel)
+
+    #
 
     def server_run(self):
         """
@@ -107,44 +122,56 @@ class Client:
         img.height, img.width, img.byte_image = self.__image_parse()
         return img
 
-    def connect(self, msg_index, msg):
-        log = "request_id " + str(msg_index) + " "
-        msg_send = pb2.C2F_Request(image=msg, request_id=msg_index, timestamp=mytime.get_timestamp(), log=log,)
+    def __daemon(self):
+        while True:
+            history = self.config.send_req
+            time.sleep(_MS_TO_S * 1000)
+            now = self.config.send_req
+            # print("client throughput is {}".format(now - history))
 
-        r = Request(mytime.get_timestamp())
-        self.latency[msg_index] = r  # 保存每个请求的发送时间
-        self.stub.C2F_getmsg(msg_send)
+    def connect(self):
+        while True:
+            req = self.send_q.get()
+            log = "request_id " + str(self.request_id) + " "
+            msg_send = pb2.C2F_Request(image=req, request_id=self.request_id, timestamp=mytime.get_timestamp(), log=log)
+            r = Request(mytime.get_timestamp())
+            self.latency[self.request_id] = r  # 保存每个请求的发送时间
+            self.request_id = self.request_id + 1
+            self.stub.C2F_getmsg(msg_send)
 
     def send_request(self):
-        time.sleep(1)
         msg = self.__generate_Request()
-        for i in range(10):
-            time.sleep(20 * 0.001)
+        for i in range(10000):
+            time.sleep(12.5 * _MS_TO_S)
+            self.config.send_req = self.config.send_req + 1
             # 生成测试数据
-            print("send request {}".format(i + 1))
-            self.connect(i + 1, msg)
+            self.send_q.put(msg)
 
     def __parse_result(self):
         print(" Client recieve part is loading")
         while True:
             reqs = self.recv_q.get()
-            count = 0
-            for r in reqs.index:
-                self.latency[r].recv_time = mytime.get_timestamp()
-                self.latency[r].res = reqs.res[count]
-                self.latency[r].dur = mytime.get_latency_ms(self.latency[r].send_time)
-                print("request id {}, res is {},inference time is {:.3f}ms".format(r, self.latency[r].res,
-                                                                                   self.latency[r].dur))
-                count = count + 1
+            # count = 0
+            for r in reqs:
+                idx = r.index
+                self.latency[idx].recv_time = mytime.get_timestamp()
+                self.latency[idx].dur = mytime.get_latency_ms(self.latency[idx].send_time)
+                # print("request id {}, res is {},inference time is {:.3f}ms".format(idx, self.latency[idx].res,
+                #                                                                    self.latency[idx].dur))
+                # count = count + 1
 
     def run(self):
 
         t1 = threading.Thread(target=self.send_request)
         t2 = threading.Thread(target=self.server_run)
         t3 = threading.Thread(target=self.__parse_result)
+        t4 = threading.Thread(target=self.__daemon)
+        t5 = threading.Thread(target=self.connect)
         t1.start()
         t2.start()
         t3.start()
+        t4.start()
+        t5.start()
 
 
 def main():

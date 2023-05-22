@@ -30,3 +30,10 @@ def get_latency_ms(timestamp):
     sec = now.seconds - timestamp.seconds
     mics = now.microseconds - timestamp.microseconds
     return round(sec * 1000 + mics / 1000, 3)  # 保留三位小数
+
+def get_latency(before,now):
+    sec = now.seconds - before.seconds
+    mics = now.microseconds - before.microseconds
+    return round(sec * 1000 + mics / 1000, 3)  # 保留三位小数
+
+

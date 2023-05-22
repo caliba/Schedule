@@ -27,6 +27,7 @@ import conf.proto.test_proto.test_pb2 as pb2
 from queue import Queue
 import lib.mstime as mytime
 
+_MS_TO_S = 0.001
 _ONE_DAY_IN_SECONDS = 60 * 60
 setproctitle.setproctitle("Frontend")
 
@@ -37,51 +38,63 @@ class F_Request:
         self.data = data
         self.request_id = request_id
         self.log = log
-        self.timestamp = []
         self.arrive_time = arrive_time  # 请求到达时间
         self.send_time = send_time  # 请求的发送时间
 
 
+# Message Frontend
+class FrontendMessage:
+    def __init__(self, data, log, id, timestamp):
+        self.data = data  # 存放数据data
+        self.timestamp = timestamp  # 存放到达时间戳
+        self.log = log  # 存放log
+        self.id = id
+
+
 class Worker:
 
-    def __init__(self, port, batch):
-        self.id = []
+    def __init__(self, port, batch, flag=True):
         self.batch = batch
         self.port = port
-        self.arrive_time = []
-        self.send_time = []
-        self.data = []
-        self.log = []
+        self.data = []  # FrontendMessage
         self.stub = None
+        self.flag = flag
 
         target_port = 'localhost:' + str(self.port)
         channel = grpc.insecure_channel(target_port)
         self.stub = pb2_grpc.F2SStub(channel)
 
 
+class Frontend_config:
+    """
+    定义Frontend处的config,
+    throughput : 吞吐量
+    send_req: 发送请求个数
+    """
+
+    def __init__(self, throughput=0):
+        self.throughput = throughput
+        self.send_req = 0
+
+
 class Request2S:
-    def __init__(self, aim_port, request_id, bytes_img, index, log, send_time):
+    def __init__(self, aim_port, data):
         self.aim_port = aim_port
-        self.request_id = request_id
-        self.bytes_img = bytes_img
-        self.index = index
-        self.log = log
-        self.send_time = send_time
+        self.data = data
 
 
 class C2F(pb2_grpc.C2FServicer):
-    """
-        grpc client to frontend
-    """
 
-    def __init__(self, queue):
+    def __init__(self, queue, config):
         self.queue = queue
+        self.config = config
 
     def C2F_getmsg(self, request, context):
         request.log = request.log + str(mytime.get_latency_ms(request.timestamp)) + str("ms ")
         r = F_Request(data=request.image, request_id=request.request_id, log=request.log,
                       arrive_time=mytime.get_timestamp(), send_time=request.timestamp)
         self.queue.put(r)
+        self.config.send_req = self.config.send_req + 1  # 收到请求数量+1
         return pb2.C2F_Response(flag=True)
 
 
@@ -90,9 +103,10 @@ class Setup(pb2_grpc.SetupServicer):
         register workload config in frontend
     """
 
-    def __init__(self, worker, idx_dic):
+    def __init__(self, worker, idx_dic,slo):
         self.idx_dic = idx_dic
         self.worker = worker
+        self.slo = slo
         self.idx = 1
 
     def Setup_getmsg(self, request, context):
@@ -100,10 +114,11 @@ class Setup(pb2_grpc.SetupServicer):
         self.idx = self.idx + 1
         self.worker[request.port] = Worker(batch=request.batch,
                                            port=request.port)
+        print("Frontend Worker config : ")
         for key in self.worker:
-            print("Worker Port: {} Batch: {} ".format(self.worker[key].port, self.worker[key].batch))
+            print("Worker Port {} prefer batch is {}".format(self.worker[key].port, self.worker[key].batch))
 
-        return pb2.S2C_Response(flag=True)
+        return pb2.Setup_Response(flag=True,slo=self.slo)
 
 
 class Frontend:
@@ -117,6 +132,8 @@ class Frontend:
         """
         self.worker = {}  # 与Frontend所连接的所有worker port->config的字典
         self.idx_dic = {}  # idx -> port 的字典
+        self.slo = 100
+        self.config = Frontend_config()
         self.request_id = 1  # server发送请求
         self.barrier = barrier  # SLOs
         self.policy = policy  # 使用何种分发策略
@@ -126,13 +143,14 @@ class Frontend:
         self.proc_q = Queue()  # 处理队列
         self.send_q = Queue()  # 发送队列
         self.size = size  # proc 图片大小
+        self.MANAGE_FLAG = False
 
     def __server(self):
         server = grpc.server(futures.ThreadPoolExecutor(max_workers=4))
-        pb2_grpc.add_C2FServicer_to_server(C2F(self.recv_q), server)
+        pb2_grpc.add_C2FServicer_to_server(C2F(self.recv_q, self.config), server)
         pb2_grpc.add_SetupServicer_to_server(
             Setup(
-                worker=self.worker, idx_dic=self.idx_dic),
+                worker=self.worker, idx_dic=self.idx_dic,slo=self.slo),
             server)
         port = '[::]:' + str(self.port)
         server.add_insecure_port(port)
@@ -148,7 +166,6 @@ class Frontend:
 
     def __preprocess(self, req):
         request_id = req.request_id  # 请求序号
-        timestamp = req.arrive_time
         log = req.log  # 请求log
         h = req.data.height
         w = req.data.width
@@ -160,14 +177,30 @@ class Frontend:
         # pic to bytes
         img = img.tobytes()
         # 处理一张图片，其返回值是一个类，包含图片信息和请求id
-        return F_Request(data=img, request_id=request_id, log=log, arrive_time=timestamp, send_time=req.send_time)
+        p_req = pb2.F2S_Request.FrontendMessage()
+        p_req.data = img
+        p_req.id = request_id
+        p_req.log = log
+        p_req.timestamp.append(req.send_time)
+        p_req.timestamp.append(req.arrive_time)
+
+        return p_req
 
     def __data_save(self):
         print("data save is running -- ")
         while True:
-            mytime.delayMs(1)
             req = self.recv_q.get()
+            # self.config.send_req = self.config.send_req + 1
+
             self.proc_q.put(self.__preprocess(req))
+
+    def __deamon(self):
+        while True:
+            history = self.config.send_req
+            time.sleep(1000 * _MS_TO_S)
+            now = self.config.send_req
+            self.config.throughput = now - history
+            # print("frontend throughput is {}".format(self.config.throughput))
 
     def __schedule(self):
         if self.policy == "RR":
@@ -177,12 +210,8 @@ class Frontend:
 
     def __add_send_q(self, worker):
         aim_port = worker.port
-        send_time = copy.copy(worker.send_time)
-        bytes_img = copy.copy(worker.data)
-        _index = copy.copy(worker.id)
-        log = copy.copy(worker.log)
-        r = Request2S(aim_port=aim_port, request_id=self.request_id, bytes_img=bytes_img,
-                      index=_index, log=log, send_time=send_time)
+        data = copy.copy(worker.data)
+        r = Request2S(aim_port=aim_port, data=data)
         self.send_q.put(r)
 
     def __RoundRobin(self):
@@ -190,17 +219,9 @@ class Frontend:
         while True:
             req = self.proc_q.get()  # 获取分配的请求
             _worker = self.worker[self.idx_dic[self.target]]
-            # 将 id img存入对应的id
-            _worker.data.append(req.data)
-            _worker.send_time.append(req.send_time)
-            _worker.arrive_time.append(req.arrive_time)
-            _worker.log.append(req.log)
-            _worker.id.append(req.request_id)
-            if len(_worker.id) == _worker.batch:
-                for i in range(_worker.batch):
-                    _worker.log[i] = _worker.log[i] + " " + str(
-                        mytime.get_latency_ms(_worker.arrive_time[i])) + " ms "
+            _worker.data.append(req)
 
+            if len(_worker.data) == _worker.batch:
                 self.__add_send_q(worker=_worker)
                 # 发送完毕后再将发送队列清空
                 self.Init_worker(_worker)
@@ -214,38 +235,38 @@ class Frontend:
         while True:
             while len(self.worker) == 0:
                 pass
-
+            # print("target {} port{}".format(self.target,self.idx_dic[self.target]))
             _worker = self.worker[self.idx_dic[self.target]]
             _batch = _worker.batch
             batch = _batch
 
             while batch:
                 req = self.proc_q.get()
-                _worker.data.append(req.data)
-                _worker.arrive_time.append(req.arrive_time)
-                _worker.send_time.append(req.send_time)
-                # req.log = req.log + " " + str(mytime.get_latency_ms(req.arrive_time)) + " ms "
-                _worker.log.append(req.log)
-                _worker.id.append(req.request_id)
+                _worker.data.append(req)  # 包含id,log,timestamp,data
                 batch = batch - 1
-
-            for i in range(_batch):
-                _worker.log[i] = _worker.log[i] + " " + str(mytime.get_latency_ms(_worker.arrive_time[i])) + " ms "
-
-            self.__add_send_q(worker=_worker)
+            self.__add_send_q(worker=copy.copy(_worker))
 
             # 发送完毕后再将发送队列清空
-            self.Init_worker(_worker)
-            self.request_id = self.request_id + 1
 
+            self.request_id = self.request_id + 1
             # 寻找下一个worker
             self.target = self.target % len(self.worker) + 1
+            self.Init_worker(_worker)
 
     def Init_worker(self, worker):
-        worker.log.clear()
-        worker.id.clear()
-        worker.arrive_time.clear()
         worker.data.clear()
+
+    def _Manage(self):
+        # 当Frontend没有worker时
+        while len(self.worker) == 0:
+            pass
+        target_port = 'localhost:' + str(40000)
+        channel = grpc.insecure_channel(target_port)
+        stub = pb2_grpc.F2DStub(channel)
+        while True:
+            time.sleep(1)
+            msg_send = pb2.F2D_Request(throughput=int(self.config.throughput)) # 把当前throughput 发送给Manager
+            stub.F2D_getmsg(msg_send)
 
     """
     def __Moniter(self):
@@ -277,12 +298,15 @@ class Frontend:
     def send(self):
         while True:
             req = self.send_q.get()
-            self.__send_req(req.aim_port, req.request_id, req.bytes_img, req.index, req.log, req.send_time)
+            self.__send_req(req.aim_port, req.data)
 
-    def __send_req(self, aim_port, request_id, bytes_img, index, log, send_time):
+    def __send_req(self, aim_port, data):
         stub = self.worker[aim_port].stub
-        msg_send = pb2.F2S_Request(request_id=request_id, size=self.size, image=bytes_img, index=index,
-                                   timestamp=mytime.get_timestamp(), log=log, send_time=send_time)
+        for i in range(len(data)):
+            data[i].log = data[i].log + " " + str(
+                mytime.get_latency_ms(data[i].timestamp[-1])) + " ms "
+            data[i].timestamp.append(mytime.get_timestamp())
+        msg_send = pb2.F2S_Request(request_id=1, size=self.size, frontendmessage=data)
         stub.F2S_getmsg(msg_send)
 
     def run(self):
@@ -290,11 +314,15 @@ class Frontend:
         t2 = threading.Thread(target=self.__data_save)  # 启动转发端
         t3 = threading.Thread(target=self.__schedule)  # 启动发送端
         t4 = threading.Thread(target=self.send)
+        t5 = threading.Thread(target=self.__deamon)
+        t6 = threading.Thread(target=self._Manage)
         # t4 = threading.Thread(target=self.__Moniter)
         t1.start()
         t2.start()
         t3.start()
         t4.start()
+        t5.start()
+        t6.start()
 
 
 def main():

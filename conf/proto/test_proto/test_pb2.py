@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\ntest.proto\"2\n\tTimestamp\x12\x0f\n\x07seconds\x18\x01 \x01(\x03\x12\x14\n\x0cmicroseconds\x18\x02 \x01(\x05\"\xac\x01\n\x0b\x43\x32\x46_Request\x12\x12\n\nrequest_id\x18\x01 \x01(\x05\x12!\n\x05image\x18\x02 \x01(\x0b\x32\x12.C2F_Request.Image\x12\x1d\n\ttimestamp\x18\x03 \x01(\x0b\x32\n.Timestamp\x12\x0b\n\x03log\x18\x04 \x01(\t\x1a:\n\x05Image\x12\x0e\n\x06height\x18\x01 \x01(\x05\x12\r\n\x05width\x18\x02 \x01(\x05\x12\x12\n\nbyte_image\x18\x03 \x01(\x0c\"\x1c\n\x0c\x43\x32\x46_Response\x12\x0c\n\x04\x66lag\x18\x01 \x01(\x08\"\x98\x01\n\x0b\x46\x32S_Request\x12\x12\n\nrequest_id\x18\x01 \x01(\x05\x12\x0c\n\x04size\x18\x02 \x01(\x05\x12\r\n\x05image\x18\x03 \x03(\x0c\x12\r\n\x05index\x18\x04 \x03(\x05\x12\x1d\n\ttimestamp\x18\x05 \x01(\x0b\x32\n.Timestamp\x12\x0b\n\x03log\x18\x06 \x03(\t\x12\x1d\n\tsend_time\x18\x07 \x03(\x0b\x32\n.Timestamp\"\x1c\n\x0c\x46\x32S_Response\x12\x0c\n\x04\x66lag\x18\x01 \x01(\x08\"U\n\x0bS2C_Request\x12\x0b\n\x03res\x18\x01 \x03(\t\x12\r\n\x05index\x18\x02 \x03(\x05\x12\x0b\n\x03log\x18\x03 \x03(\t\x12\x1d\n\ttimestamp\x18\x04 \x01(\x0b\x32\n.Timestamp\"\x1c\n\x0cS2C_Response\x12\x0c\n\x04\x66lag\x18\x01 \x01(\x08\",\n\rSetup_Request\x12\x0c\n\x04port\x18\x01 \x01(\t\x12\r\n\x05\x62\x61tch\x18\x02 \x01(\x05\"\x1e\n\x0eSetup_Response\x12\x0c\n\x04\x66lag\x18\x01 \x01(\x08\"(\n\x0cTest_Request\x12\x0b\n\x03msg\x18\x01 \x01(\x05\x12\x0b\n\x03img\x18\x02 \x01(\x0c\"\x1d\n\rTest_Response\x12\x0c\n\x04\x66lag\x18\x01 \x01(\x08\x32\x32\n\x03\x43\x32\x46\x12+\n\nC2F_getmsg\x12\x0c.C2F_Request\x1a\r.C2F_Response\"\x00\x32\x32\n\x03\x46\x32S\x12+\n\nF2S_getmsg\x12\x0c.F2S_Request\x1a\r.F2S_Response\"\x00\x32\x32\n\x03S2C\x12+\n\nS2C_getmsg\x12\x0c.S2C_Request\x1a\r.S2C_Response\"\x00\x32:\n\x05Setup\x12\x31\n\x0cSetup_getmsg\x12\x0e.Setup_Request\x1a\x0f.Setup_Response\"\x00\x32\x36\n\x04Test\x12.\n\x0bTest_getmsg\x12\r.Test_Request\x1a\x0e.Test_Response\"\x00\x62\x06proto3'
+  serialized_pb=b'\n\ntest.proto\"2\n\tTimestamp\x12\x0f\n\x07seconds\x18\x01 \x01(\x03\x12\x14\n\x0cmicroseconds\x18\x02 \x01(\x05\"\xac\x01\n\x0b\x43\x32\x46_Request\x12\x12\n\nrequest_id\x18\x01 \x01(\x05\x12!\n\x05image\x18\x02 \x01(\x0b\x32\x12.C2F_Request.Image\x12\x1d\n\ttimestamp\x18\x03 \x01(\x0b\x32\n.Timestamp\x12\x0b\n\x03log\x18\x04 \x01(\t\x1a:\n\x05Image\x12\x0e\n\x06height\x18\x01 \x01(\x05\x12\r\n\x05width\x18\x02 \x01(\x05\x12\x12\n\nbyte_image\x18\x03 \x01(\x0c\"\x1c\n\x0c\x43\x32\x46_Response\x12\x0c\n\x04\x66lag\x18\x01 \x01(\x08\"\xbf\x01\n\x0b\x46\x32S_Request\x12\x12\n\nrequest_id\x18\x01 \x01(\x05\x12\x0c\n\x04size\x18\x02 \x01(\x05\x12\x35\n\x0f\x66rontendmessage\x18\x03 \x03(\x0b\x32\x1c.F2S_Request.FrontendMessage\x1aW\n\x0f\x46rontendMessage\x12\x0c\n\x04\x64\x61ta\x18\x01 \x01(\x0c\x12\n\n\x02id\x18\x02 \x01(\x05\x12\x0b\n\x03log\x18\x03 \x01(\t\x12\x1d\n\ttimestamp\x18\x04 \x03(\x0b\x32\n.Timestamp\"\x1c\n\x0c\x46\x32S_Response\x12\x0c\n\x04\x66lag\x18\x01 \x01(\x08\"\xad\x01\n\x0bS2C_Request\x12\x12\n\nrequest_id\x18\x01 \x01(\x05\x12\x31\n\rservermessage\x18\x02 \x03(\x0b\x32\x1a.S2C_Request.ServerMessage\x1aW\n\rServerMessage\x12\r\n\x05index\x18\x01 \x01(\x05\x12\x0b\n\x03res\x18\x02 \x01(\t\x12\x0b\n\x03log\x18\x03 \x01(\t\x12\x1d\n\ttimestamp\x18\x04 \x03(\x0b\x32\n.Timestamp\"\x1c\n\x0cS2C_Response\x12\x0c\n\x04\x66lag\x18\x01 \x01(\x08\",\n\rSetup_Request\x12\x0c\n\x04port\x18\x01 \x01(\t\x12\r\n\x05\x62\x61tch\x18\x02 \x01(\x05\"+\n\x0eSetup_Response\x12\x0c\n\x04\x66lag\x18\x01 \x01(\x08\x12\x0b\n\x03slo\x18\x02 \x01(\x05\"!\n\x0b\x46\x32\x44_Request\x12\x12\n\nthroughput\x18\x01 \x01(\x05\"\x1c\n\x0c\x46\x32\x44_Response\x12\x0c\n\x04\x66lag\x18\x01 \x01(\x08\"G\n\x0bS2D_Request\x12\x12\n\nthroughput\x18\x01 \x01(\x05\x12\x16\n\x0emax_throughput\x18\x02 \x01(\x05\x12\x0c\n\x04port\x18\x03 \x01(\t\"\x1c\n\x0cS2D_Response\x12\x0c\n\x04\x66lag\x18\x01 \x01(\x08\x32\x32\n\x03\x43\x32\x46\x12+\n\nC2F_getmsg\x12\x0c.C2F_Request\x1a\r.C2F_Response\"\x00\x32\x32\n\x03\x46\x32S\x12+\n\nF2S_getmsg\x12\x0c.F2S_Request\x1a\r.F2S_Response\"\x00\x32\x32\n\x03S2C\x12+\n\nS2C_getmsg\x12\x0c.S2C_Request\x1a\r.S2C_Response\"\x00\x32:\n\x05Setup\x12\x31\n\x0cSetup_getmsg\x12\x0e.Setup_Request\x1a\x0f.Setup_Response\"\x00\x32\x32\n\x03\x46\x32\x44\x12+\n\nF2D_getmsg\x12\x0c.F2D_Request\x1a\r.F2D_Response\"\x00\x32\x32\n\x03S2D\x12+\n\nS2D_getmsg\x12\x0c.S2D_Request\x1a\r.S2D_Response\"\x00\x62\x06proto3'
 )
 
 
@@ -194,6 +194,58 @@ _C2F_RESPONSE = _descriptor.Descriptor(
 )
 
 
+_F2S_REQUEST_FRONTENDMESSAGE = _descriptor.Descriptor(
+  name='FrontendMessage',
+  full_name='F2S_Request.FrontendMessage',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='data', full_name='F2S_Request.FrontendMessage.data', index=0,
+      number=1, type=12, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"",
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='id', full_name='F2S_Request.FrontendMessage.id', index=1,
+      number=2, type=5, cpp_type=1, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='log', full_name='F2S_Request.FrontendMessage.log', index=2,
+      number=3, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='timestamp', full_name='F2S_Request.FrontendMessage.timestamp', index=3,
+      number=4, type=11, cpp_type=10, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=376,
+  serialized_end=463,
+)
+
 _F2S_REQUEST = _descriptor.Descriptor(
   name='F2S_Request',
   full_name='F2S_Request',
@@ -217,36 +269,8 @@ _F2S_REQUEST = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='image', full_name='F2S_Request.image', index=2,
-      number=3, type=12, cpp_type=9, label=3,
-      has_default_value=False, default_value=[],
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='index', full_name='F2S_Request.index', index=3,
-      number=4, type=5, cpp_type=1, label=3,
-      has_default_value=False, default_value=[],
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='timestamp', full_name='F2S_Request.timestamp', index=4,
-      number=5, type=11, cpp_type=10, label=1,
-      has_default_value=False, default_value=None,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='log', full_name='F2S_Request.log', index=5,
-      number=6, type=9, cpp_type=9, label=3,
-      has_default_value=False, default_value=[],
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='send_time', full_name='F2S_Request.send_time', index=6,
-      number=7, type=11, cpp_type=10, label=3,
+      name='frontendmessage', full_name='F2S_Request.frontendmessage', index=2,
+      number=3, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -254,7 +278,7 @@ _F2S_REQUEST = _descriptor.Descriptor(
   ],
   extensions=[
   ],
-  nested_types=[],
+  nested_types=[_F2S_REQUEST_FRONTENDMESSAGE, ],
   enum_types=[
   ],
   serialized_options=None,
@@ -264,7 +288,7 @@ _F2S_REQUEST = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=272,
-  serialized_end=424,
+  serialized_end=463,
 )
 
 
@@ -295,44 +319,44 @@ _F2S_RESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=426,
-  serialized_end=454,
+  serialized_start=465,
+  serialized_end=493,
 )
 
 
-_S2C_REQUEST = _descriptor.Descriptor(
-  name='S2C_Request',
-  full_name='S2C_Request',
+_S2C_REQUEST_SERVERMESSAGE = _descriptor.Descriptor(
+  name='ServerMessage',
+  full_name='S2C_Request.ServerMessage',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='res', full_name='S2C_Request.res', index=0,
-      number=1, type=9, cpp_type=9, label=3,
-      has_default_value=False, default_value=[],
+      name='index', full_name='S2C_Request.ServerMessage.index', index=0,
+      number=1, type=5, cpp_type=1, label=1,
+      has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='index', full_name='S2C_Request.index', index=1,
-      number=2, type=5, cpp_type=1, label=3,
-      has_default_value=False, default_value=[],
+      name='res', full_name='S2C_Request.ServerMessage.res', index=1,
+      number=2, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='log', full_name='S2C_Request.log', index=2,
-      number=3, type=9, cpp_type=9, label=3,
-      has_default_value=False, default_value=[],
+      name='log', full_name='S2C_Request.ServerMessage.log', index=2,
+      number=3, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='timestamp', full_name='S2C_Request.timestamp', index=3,
-      number=4, type=11, cpp_type=10, label=1,
-      has_default_value=False, default_value=None,
+      name='timestamp', full_name='S2C_Request.ServerMessage.timestamp', index=3,
+      number=4, type=11, cpp_type=10, label=3,
+      has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
@@ -348,8 +372,46 @@ _S2C_REQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=456,
-  serialized_end=541,
+  serialized_start=582,
+  serialized_end=669,
+)
+
+_S2C_REQUEST = _descriptor.Descriptor(
+  name='S2C_Request',
+  full_name='S2C_Request',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='request_id', full_name='S2C_Request.request_id', index=0,
+      number=1, type=5, cpp_type=1, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='servermessage', full_name='S2C_Request.servermessage', index=1,
+      number=2, type=11, cpp_type=10, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[_S2C_REQUEST_SERVERMESSAGE, ],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=496,
+  serialized_end=669,
 )
 
 
@@ -380,8 +442,8 @@ _S2C_RESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=543,
-  serialized_end=571,
+  serialized_start=671,
+  serialized_end=699,
 )
 
 
@@ -419,8 +481,8 @@ _SETUP_REQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=573,
-  serialized_end=617,
+  serialized_start=701,
+  serialized_end=745,
 )
 
 
@@ -439,6 +501,13 @@ _SETUP_RESPONSE = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='slo', full_name='Setup_Response.slo', index=1,
+      number=2, type=5, cpp_type=1, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
   ],
   extensions=[
   ],
@@ -451,33 +520,26 @@ _SETUP_RESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=619,
-  serialized_end=649,
+  serialized_start=747,
+  serialized_end=790,
 )
 
 
-_TEST_REQUEST = _descriptor.Descriptor(
-  name='Test_Request',
-  full_name='Test_Request',
+_F2D_REQUEST = _descriptor.Descriptor(
+  name='F2D_Request',
+  full_name='F2D_Request',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='msg', full_name='Test_Request.msg', index=0,
+      name='throughput', full_name='F2D_Request.throughput', index=0,
       number=1, type=5, cpp_type=1, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='img', full_name='Test_Request.img', index=1,
-      number=2, type=12, cpp_type=9, label=1,
-      has_default_value=False, default_value=b"",
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
   ],
   extensions=[
   ],
@@ -490,21 +552,21 @@ _TEST_REQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=651,
-  serialized_end=691,
+  serialized_start=792,
+  serialized_end=825,
 )
 
 
-_TEST_RESPONSE = _descriptor.Descriptor(
-  name='Test_Response',
-  full_name='Test_Response',
+_F2D_RESPONSE = _descriptor.Descriptor(
+  name='F2D_Response',
+  full_name='F2D_Response',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='flag', full_name='Test_Response.flag', index=0,
+      name='flag', full_name='F2D_Response.flag', index=0,
       number=1, type=8, cpp_type=7, label=1,
       has_default_value=False, default_value=False,
       message_type=None, enum_type=None, containing_type=None,
@@ -522,16 +584,97 @@ _TEST_RESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=693,
-  serialized_end=722,
+  serialized_start=827,
+  serialized_end=855,
+)
+
+
+_S2D_REQUEST = _descriptor.Descriptor(
+  name='S2D_Request',
+  full_name='S2D_Request',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='throughput', full_name='S2D_Request.throughput', index=0,
+      number=1, type=5, cpp_type=1, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='max_throughput', full_name='S2D_Request.max_throughput', index=1,
+      number=2, type=5, cpp_type=1, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='port', full_name='S2D_Request.port', index=2,
+      number=3, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=857,
+  serialized_end=928,
+)
+
+
+_S2D_RESPONSE = _descriptor.Descriptor(
+  name='S2D_Response',
+  full_name='S2D_Response',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='flag', full_name='S2D_Response.flag', index=0,
+      number=1, type=8, cpp_type=7, label=1,
+      has_default_value=False, default_value=False,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=930,
+  serialized_end=958,
 )
 
 _C2F_REQUEST_IMAGE.containing_type = _C2F_REQUEST
 _C2F_REQUEST.fields_by_name['image'].message_type = _C2F_REQUEST_IMAGE
 _C2F_REQUEST.fields_by_name['timestamp'].message_type = _TIMESTAMP
-_F2S_REQUEST.fields_by_name['timestamp'].message_type = _TIMESTAMP
-_F2S_REQUEST.fields_by_name['send_time'].message_type = _TIMESTAMP
-_S2C_REQUEST.fields_by_name['timestamp'].message_type = _TIMESTAMP
+_F2S_REQUEST_FRONTENDMESSAGE.fields_by_name['timestamp'].message_type = _TIMESTAMP
+_F2S_REQUEST_FRONTENDMESSAGE.containing_type = _F2S_REQUEST
+_F2S_REQUEST.fields_by_name['frontendmessage'].message_type = _F2S_REQUEST_FRONTENDMESSAGE
+_S2C_REQUEST_SERVERMESSAGE.fields_by_name['timestamp'].message_type = _TIMESTAMP
+_S2C_REQUEST_SERVERMESSAGE.containing_type = _S2C_REQUEST
+_S2C_REQUEST.fields_by_name['servermessage'].message_type = _S2C_REQUEST_SERVERMESSAGE
 DESCRIPTOR.message_types_by_name['Timestamp'] = _TIMESTAMP
 DESCRIPTOR.message_types_by_name['C2F_Request'] = _C2F_REQUEST
 DESCRIPTOR.message_types_by_name['C2F_Response'] = _C2F_RESPONSE
@@ -541,8 +684,10 @@ DESCRIPTOR.message_types_by_name['S2C_Request'] = _S2C_REQUEST
 DESCRIPTOR.message_types_by_name['S2C_Response'] = _S2C_RESPONSE
 DESCRIPTOR.message_types_by_name['Setup_Request'] = _SETUP_REQUEST
 DESCRIPTOR.message_types_by_name['Setup_Response'] = _SETUP_RESPONSE
-DESCRIPTOR.message_types_by_name['Test_Request'] = _TEST_REQUEST
-DESCRIPTOR.message_types_by_name['Test_Response'] = _TEST_RESPONSE
+DESCRIPTOR.message_types_by_name['F2D_Request'] = _F2D_REQUEST
+DESCRIPTOR.message_types_by_name['F2D_Response'] = _F2D_RESPONSE
+DESCRIPTOR.message_types_by_name['S2D_Request'] = _S2D_REQUEST
+DESCRIPTOR.message_types_by_name['S2D_Response'] = _S2D_RESPONSE
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 Timestamp = _reflection.GeneratedProtocolMessageType('Timestamp', (_message.Message,), {
@@ -575,11 +720,19 @@ C2F_Response = _reflection.GeneratedProtocolMessageType('C2F_Response', (_messag
 _sym_db.RegisterMessage(C2F_Response)
 
 F2S_Request = _reflection.GeneratedProtocolMessageType('F2S_Request', (_message.Message,), {
+
+  'FrontendMessage' : _reflection.GeneratedProtocolMessageType('FrontendMessage', (_message.Message,), {
+    'DESCRIPTOR' : _F2S_REQUEST_FRONTENDMESSAGE,
+    '__module__' : 'test_pb2'
+    # @@protoc_insertion_point(class_scope:F2S_Request.FrontendMessage)
+    })
+  ,
   'DESCRIPTOR' : _F2S_REQUEST,
   '__module__' : 'test_pb2'
   # @@protoc_insertion_point(class_scope:F2S_Request)
   })
 _sym_db.RegisterMessage(F2S_Request)
+_sym_db.RegisterMessage(F2S_Request.FrontendMessage)
 
 F2S_Response = _reflection.GeneratedProtocolMessageType('F2S_Response', (_message.Message,), {
   'DESCRIPTOR' : _F2S_RESPONSE,
@@ -589,11 +742,19 @@ F2S_Response = _reflection.GeneratedProtocolMessageType('F2S_Response', (_messag
 _sym_db.RegisterMessage(F2S_Response)
 
 S2C_Request = _reflection.GeneratedProtocolMessageType('S2C_Request', (_message.Message,), {
+
+  'ServerMessage' : _reflection.GeneratedProtocolMessageType('ServerMessage', (_message.Message,), {
+    'DESCRIPTOR' : _S2C_REQUEST_SERVERMESSAGE,
+    '__module__' : 'test_pb2'
+    # @@protoc_insertion_point(class_scope:S2C_Request.ServerMessage)
+    })
+  ,
   'DESCRIPTOR' : _S2C_REQUEST,
   '__module__' : 'test_pb2'
   # @@protoc_insertion_point(class_scope:S2C_Request)
   })
 _sym_db.RegisterMessage(S2C_Request)
+_sym_db.RegisterMessage(S2C_Request.ServerMessage)
 
 S2C_Response = _reflection.GeneratedProtocolMessageType('S2C_Response', (_message.Message,), {
   'DESCRIPTOR' : _S2C_RESPONSE,
@@ -616,19 +777,33 @@ Setup_Response = _reflection.GeneratedProtocolMessageType('Setup_Response', (_me
   })
 _sym_db.RegisterMessage(Setup_Response)
 
-Test_Request = _reflection.GeneratedProtocolMessageType('Test_Request', (_message.Message,), {
-  'DESCRIPTOR' : _TEST_REQUEST,
+F2D_Request = _reflection.GeneratedProtocolMessageType('F2D_Request', (_message.Message,), {
+  'DESCRIPTOR' : _F2D_REQUEST,
   '__module__' : 'test_pb2'
-  # @@protoc_insertion_point(class_scope:Test_Request)
+  # @@protoc_insertion_point(class_scope:F2D_Request)
   })
-_sym_db.RegisterMessage(Test_Request)
+_sym_db.RegisterMessage(F2D_Request)
 
-Test_Response = _reflection.GeneratedProtocolMessageType('Test_Response', (_message.Message,), {
-  'DESCRIPTOR' : _TEST_RESPONSE,
+F2D_Response = _reflection.GeneratedProtocolMessageType('F2D_Response', (_message.Message,), {
+  'DESCRIPTOR' : _F2D_RESPONSE,
   '__module__' : 'test_pb2'
-  # @@protoc_insertion_point(class_scope:Test_Response)
+  # @@protoc_insertion_point(class_scope:F2D_Response)
   })
-_sym_db.RegisterMessage(Test_Response)
+_sym_db.RegisterMessage(F2D_Response)
+
+S2D_Request = _reflection.GeneratedProtocolMessageType('S2D_Request', (_message.Message,), {
+  'DESCRIPTOR' : _S2D_REQUEST,
+  '__module__' : 'test_pb2'
+  # @@protoc_insertion_point(class_scope:S2D_Request)
+  })
+_sym_db.RegisterMessage(S2D_Request)
+
+S2D_Response = _reflection.GeneratedProtocolMessageType('S2D_Response', (_message.Message,), {
+  'DESCRIPTOR' : _S2D_RESPONSE,
+  '__module__' : 'test_pb2'
+  # @@protoc_insertion_point(class_scope:S2D_Response)
+  })
+_sym_db.RegisterMessage(S2D_Response)
 
 
 
@@ -639,8 +814,8 @@ _C2F = _descriptor.ServiceDescriptor(
   index=0,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=724,
-  serialized_end=774,
+  serialized_start=960,
+  serialized_end=1010,
   methods=[
   _descriptor.MethodDescriptor(
     name='C2F_getmsg',
@@ -665,8 +840,8 @@ _F2S = _descriptor.ServiceDescriptor(
   index=1,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=776,
-  serialized_end=826,
+  serialized_start=1012,
+  serialized_end=1062,
   methods=[
   _descriptor.MethodDescriptor(
     name='F2S_getmsg',
@@ -691,8 +866,8 @@ _S2C = _descriptor.ServiceDescriptor(
   index=2,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=828,
-  serialized_end=878,
+  serialized_start=1064,
+  serialized_end=1114,
   methods=[
   _descriptor.MethodDescriptor(
     name='S2C_getmsg',
@@ -717,8 +892,8 @@ _SETUP = _descriptor.ServiceDescriptor(
   index=3,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=880,
-  serialized_end=938,
+  serialized_start=1116,
+  serialized_end=1174,
   methods=[
   _descriptor.MethodDescriptor(
     name='Setup_getmsg',
@@ -736,29 +911,55 @@ _sym_db.RegisterServiceDescriptor(_SETUP)
 DESCRIPTOR.services_by_name['Setup'] = _SETUP
 
 
-_TEST = _descriptor.ServiceDescriptor(
-  name='Test',
-  full_name='Test',
+_F2D = _descriptor.ServiceDescriptor(
+  name='F2D',
+  full_name='F2D',
   file=DESCRIPTOR,
   index=4,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=940,
-  serialized_end=994,
+  serialized_start=1176,
+  serialized_end=1226,
   methods=[
   _descriptor.MethodDescriptor(
-    name='Test_getmsg',
-    full_name='Test.Test_getmsg',
+    name='F2D_getmsg',
+    full_name='F2D.F2D_getmsg',
     index=0,
     containing_service=None,
-    input_type=_TEST_REQUEST,
-    output_type=_TEST_RESPONSE,
+    input_type=_F2D_REQUEST,
+    output_type=_F2D_RESPONSE,
     serialized_options=None,
     create_key=_descriptor._internal_create_key,
   ),
 ])
-_sym_db.RegisterServiceDescriptor(_TEST)
+_sym_db.RegisterServiceDescriptor(_F2D)
 
-DESCRIPTOR.services_by_name['Test'] = _TEST
+DESCRIPTOR.services_by_name['F2D'] = _F2D
+
+
+_S2D = _descriptor.ServiceDescriptor(
+  name='S2D',
+  full_name='S2D',
+  file=DESCRIPTOR,
+  index=5,
+  serialized_options=None,
+  create_key=_descriptor._internal_create_key,
+  serialized_start=1228,
+  serialized_end=1278,
+  methods=[
+  _descriptor.MethodDescriptor(
+    name='S2D_getmsg',
+    full_name='S2D.S2D_getmsg',
+    index=0,
+    containing_service=None,
+    input_type=_S2D_REQUEST,
+    output_type=_S2D_RESPONSE,
+    serialized_options=None,
+    create_key=_descriptor._internal_create_key,
+  ),
+])
+_sym_db.RegisterServiceDescriptor(_S2D)
+
+DESCRIPTOR.services_by_name['S2D'] = _S2D
 
 # @@protoc_insertion_point(module_scope)

@@ -33,11 +33,19 @@ service F2S{
 message F2S_Request{
   int32 request_id = 1; // 请求id
   int32 size = 2; // 图片大小 a*a*3
-  repeated bytes image = 3; // 图片
-  repeated int32 index = 4; // 一个batch中所有请求的序号
-  Timestamp timestamp = 5; // 发送时间戳
-  repeated string log =6;
-  repeated Timestamp send_time = 7;
+  message FrontendMessage{
+    bytes data = 1;
+    int32 id = 2;
+    string log = 3;
+    repeated Timestamp timestamp = 4;
+  }
+  repeated FrontendMessage frontendmessage = 3;
+
+  //  repeated bytes image = 3; // 图片
+  //  repeated int32 index = 4; // 一个batch中所有请求的序号
+  //  Timestamp timestamp = 5; // 发送时间戳
+  //  repeated string log =6;
+  //  repeated Timestamp send_time = 7;
 }
 
 message F2S_Response{
@@ -50,10 +58,15 @@ service S2C{
 }
 
 message S2C_Request{
-  repeated string res = 1; // 请求预测的结果数组
-  repeated int32 index = 2; // 请求的序号
-  repeated string log = 3;
-  Timestamp timestamp = 4;
+//  repeated string res = 1; // 请求预测的结果数组
+  int32 request_id = 1;
+  message ServerMessage{
+    int32 index = 1;
+    string res = 2;
+    string log = 3;
+    repeated Timestamp timestamp = 4;
+  }
+  repeated ServerMessage servermessage = 2;
 }
 
 message S2C_Response{
@@ -72,17 +85,31 @@ message Setup_Request{
 
 message Setup_Response{
   bool flag = 1;
+  int32 slo = 2;
 }
 
-// test msg
-service Test{
-  rpc Test_getmsg(Test_Request) returns (Test_Response){}
-}
-message Test_Request{
-  int32 msg = 1;
-  bytes img = 2;
+service F2D{
+  rpc F2D_getmsg(F2D_Request) returns (F2D_Response){}
 }
 
-message Test_Response{
-  bool flag = 1;
+message F2D_Request{
+  int32 throughput = 1;
+}
+
+message F2D_Response{
+  bool flag= 1;
+}
+
+service S2D{
+  rpc S2D_getmsg(S2D_Request) returns (S2D_Response){}
+}
+
+message S2D_Request{
+  int32 throughput = 1;
+  int32 max_throughput = 2;
+  string port = 3;
+}
+
+message S2D_Response{
+  bool flag= 1;
 }

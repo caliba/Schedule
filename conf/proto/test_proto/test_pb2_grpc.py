@@ -261,9 +261,8 @@ class Setup(object):
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
 
-class TestStub(object):
-    """test msg
-    """
+class F2DStub(object):
+    """Missing associated documentation comment in .proto file."""
 
     def __init__(self, channel):
         """Constructor.
@@ -271,44 +270,42 @@ class TestStub(object):
         Args:
             channel: A grpc.Channel.
         """
-        self.Test_getmsg = channel.unary_unary(
-                '/Test/Test_getmsg',
-                request_serializer=test__pb2.Test_Request.SerializeToString,
-                response_deserializer=test__pb2.Test_Response.FromString,
+        self.F2D_getmsg = channel.unary_unary(
+                '/F2D/F2D_getmsg',
+                request_serializer=test__pb2.F2D_Request.SerializeToString,
+                response_deserializer=test__pb2.F2D_Response.FromString,
                 )
 
 
-class TestServicer(object):
-    """test msg
-    """
+class F2DServicer(object):
+    """Missing associated documentation comment in .proto file."""
 
-    def Test_getmsg(self, request, context):
+    def F2D_getmsg(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
 
-def add_TestServicer_to_server(servicer, server):
+def add_F2DServicer_to_server(servicer, server):
     rpc_method_handlers = {
-            'Test_getmsg': grpc.unary_unary_rpc_method_handler(
-                    servicer.Test_getmsg,
-                    request_deserializer=test__pb2.Test_Request.FromString,
-                    response_serializer=test__pb2.Test_Response.SerializeToString,
+            'F2D_getmsg': grpc.unary_unary_rpc_method_handler(
+                    servicer.F2D_getmsg,
+                    request_deserializer=test__pb2.F2D_Request.FromString,
+                    response_serializer=test__pb2.F2D_Response.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'Test', rpc_method_handlers)
+            'F2D', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
 
 
  # This class is part of an EXPERIMENTAL API.
-class Test(object):
-    """test msg
-    """
+class F2D(object):
+    """Missing associated documentation comment in .proto file."""
 
     @staticmethod
-    def Test_getmsg(request,
+    def F2D_getmsg(request,
             target,
             options=(),
             channel_credentials=None,
@@ -318,8 +315,69 @@ class Test(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/Test/Test_getmsg',
-            test__pb2.Test_Request.SerializeToString,
-            test__pb2.Test_Response.FromString,
+        return grpc.experimental.unary_unary(request, target, '/F2D/F2D_getmsg',
+            test__pb2.F2D_Request.SerializeToString,
+            test__pb2.F2D_Response.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+
+class S2DStub(object):
+    """Missing associated documentation comment in .proto file."""
+
+    def __init__(self, channel):
+        """Constructor.
+
+        Args:
+            channel: A grpc.Channel.
+        """
+        self.S2D_getmsg = channel.unary_unary(
+                '/S2D/S2D_getmsg',
+                request_serializer=test__pb2.S2D_Request.SerializeToString,
+                response_deserializer=test__pb2.S2D_Response.FromString,
+                )
+
+
+class S2DServicer(object):
+    """Missing associated documentation comment in .proto file."""
+
+    def S2D_getmsg(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+
+def add_S2DServicer_to_server(servicer, server):
+    rpc_method_handlers = {
+            'S2D_getmsg': grpc.unary_unary_rpc_method_handler(
+                    servicer.S2D_getmsg,
+                    request_deserializer=test__pb2.S2D_Request.FromString,
+                    response_serializer=test__pb2.S2D_Response.SerializeToString,
+            ),
+    }
+    generic_handler = grpc.method_handlers_generic_handler(
+            'S2D', rpc_method_handlers)
+    server.add_generic_rpc_handlers((generic_handler,))
+
+
+ # This class is part of an EXPERIMENTAL API.
+class S2D(object):
+    """Missing associated documentation comment in .proto file."""
+
+    @staticmethod
+    def S2D_getmsg(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/S2D/S2D_getmsg',
+            test__pb2.S2D_Request.SerializeToString,
+            test__pb2.S2D_Response.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
