@@ -50,23 +50,30 @@ class S2D(pb2_grpc.S2DServicer):
     def S2D_getmsg(self, request, context):
         # port throughput max_throughput
         self.worklist[int(request.port)].throughput = request.throughput  # 更新worker的throughput
-
-        print("122131231 {}".format(request.throughput))
         return pb2.S2D_Response(flag=True)
 
 
 class Manage:
+    """
+    Manage:
+        Step1: 根据输入的SLO 选择 throughoyt 最大的workload配置
+        Step2: 启动Manage server 40000端口，暴露分别与workload和frontend连接的接口
+                - 根据Step1中得出的workload的配置，初始化启动一台机器
+        Step3: deamon通过检测Frontend处的throughput，来判断当前Manage下的workload能否满足这样的throughput的处理需求
+                - 若worker的处理能力小于frontend的输入，则增设机器
+                - 若worker处理能力大于frontend的输入，则停止机器（未实现）
+    """
 
-    def __init__(self, slo):
-        self.port = 40000
+    def __init__(self, slo, port):
+        self.port = port
         self.slo = slo
         self.frontend = Manage_F()  # 获取frontend的throughput
         self.max_throughput = 0  # 额定最大batchsize
         self.worker_thread = {}
         self.workerlist = {}
-        self.profile = {1: 25, 2: 40}  # worker profile batch->duration
-        self.ip = 50003
-
+        self.profile = {1: 25, 2: 40}  # worker profile: batch->duration
+        self.ip = 40003
+        """ Step 1"""
         try:
             for key in self.profile:
                 if self.profile[key] * 2 < self.slo:
@@ -76,13 +83,6 @@ class Manage:
         except:
             print("error")
 
-        # Init worker
-        s = Server(port=50002, aimport=50000, feport=50001, model_name="VGG", profile=self.profile, slo=self.slo)
-        self.workerlist[50002] = Manage_W(50002)
-        self.worker_thread[50002] = s
-        s.run()
-        # self.worker_thread.append(s)
-
     def __server(self):
         server = grpc.server(futures.ThreadPoolExecutor(max_workers=4))
         pb2_grpc.add_F2DServicer_to_server(F2D(self.frontend), server)
@@ -90,6 +90,12 @@ class Manage:
         port = '[::]:' + str(self.port)
         server.add_insecure_port(port)
         server.start()
+
+        # Init single worker
+        s = Server(port=40002, aimport=50000, feport=50001, model_name="VGG", profile=self.profile, slo=self.slo)
+        self.workerlist[40002] = Manage_W(40002)
+        self.worker_thread[40002] = s
+        s.run()
 
         try:
             while True:
@@ -105,19 +111,16 @@ class Manage:
             print("frontend throughput is {}".format(self.frontend.throughput))
             if self.frontend.throughput != 0:
                 _num = len(self.workerlist)  # 现在有多少个workload
-                _prefer = math.ceil(self.frontend.throughput / self.max_throughput) # 应该需要多少个workerload
+                _prefer = math.ceil(self.frontend.throughput / self.max_throughput)  # 应该需要多少个workerload
                 if _num < _prefer:
-                # if self.frontend.throughput > _num * self.max_throughput:  # 如果小于throughput 那么就开一个
                     s = Server(port=self.ip, aimport=50000, feport=50001, model_name="VGG",
                                profile=self.profile, slo=self.slo)
                     self.workerlist[self.ip] = Manage_W(self.ip)
                     self.worker_thread[self.ip] = s
                     s.run()
                     self.ip = self.ip + 1
-                elif _num > _prefer: # 有空闲的机器
+                elif _num > _prefer:  # 有空闲的机器
                     pass
-
-
 
     def run(self):
         t1 = threading.Thread(target=self.__daemon)
@@ -127,7 +130,7 @@ class Manage:
 
 
 def main():
-    Manage(slo=100).run()
+    Manage(slo=100, port=40000).run()
 
 
 if __name__ == "__main__":

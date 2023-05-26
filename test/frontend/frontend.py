@@ -122,14 +122,18 @@ class Setup(pb2_grpc.SetupServicer):
 
 
 class Frontend:
+    """
+    Frontend：
+        Step1：启动server:50001
+                - 从client接受req
+                - 从worker处接受配置信息，用于自身sheduler判断
+        Step2: datasave:从client读取数据，放入recv_q
+        Step3: preprocess req，从recv_q读取数据，进行数据预处理放入proc_q
+        Step4: scheduler 根据RR或BA算法，向每个worker的queue中放入数据，满足要求后，放入send_q中
+        Step5: 从send_q中读取数据，再向对应port的worker发送数据
+        Step6: deamon：计算frontend的throughput，并发送给Manage
+    """
     def __init__(self, port, size=224, policy="BA", barrier=5):
-        """
-
-        :param port:
-        :param size:
-        :param policy:
-        :param barrier:
-        """
         self.worker = {}  # 与Frontend所连接的所有worker port->config的字典
         self.idx_dic = {}  # idx -> port 的字典
         self.slo = 100

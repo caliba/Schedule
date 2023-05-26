@@ -58,6 +58,15 @@ class F2S(pb2_grpc.F2SServicer):
 
 
 class Server:
+    """
+    Worker:
+        step1:先启动worker server
+            - 用于接受Frontend发送过来的请求
+            - 向Frontend发送请求，表明worker的配置
+        step2:处理请求
+        step3:向client发送请求
+        step4:向Manage发送worker实时的吞吐量
+    """
     def __init__(self, port, aimport, feport, model_name, profile,slo, batch=1):
         """
 
@@ -85,13 +94,14 @@ class Server:
                 if self.profile[key] * 2 < self.slo:
                     self.batch = key  # 根据SLOs选择perferbatch
                 else:
-
                     break
             print("prefer batch {}".format(self.batch))
         except:
             pass
 
-        #
+
+
+
         target_port = 'localhost:' + str(self.aim_port)
         channel = grpc.insecure_channel(target_port)
         self.stub = pb2_grpc.S2CStub(channel)
@@ -228,6 +238,7 @@ class Server:
         self.stub.S2C_getmsg(msg_send)
 
     def _Manage(self):
+        # 先与Manage相连接
         target_port = 'localhost:' + str(40000)
         channel = grpc.insecure_channel(target_port)
         stub = pb2_grpc.S2DStub(channel)
@@ -235,7 +246,7 @@ class Server:
             msg_send = pb2.S2D_Request(throughput=int(self.worker_profile.throughput),
                                        max_throughput=int(self.profile[self.batch]),
                                        port=str(self.port))  # 把当前throughput的信息发送给Manager
-            stub.S2D_getmsg(msg_send)
+            res = stub.S2D_getmsg(msg_send)
             time.sleep(1)
 
         pass
@@ -245,12 +256,12 @@ class Server:
         t2 = threading.Thread(target=self.__model)
         t3 = threading.Thread(target=self.send)
         t4 = threading.Thread(target=self.__deamon)
-        # t6 = threading.Thread(target=self._Manage)
+        t6 = threading.Thread(target=self._Manage)
         t1.start()
         t2.start()
         t3.start()
         t4.start()
-        # t6.start()
+        t6.start()
 
 
 def main():
