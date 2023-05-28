@@ -8,6 +8,8 @@
 import setproctitle
 import random
 import copy
+import logging
+import logging.config
 import threading
 import time
 import grpc
@@ -20,6 +22,8 @@ import conf.proto.test_proto.test_pb2 as pb2
 import conf.proto.test_proto.test_pb2_grpc as pb2_grpc
 from queue import Queue
 
+logging.config.fileConfig('../../log/logging.conf')
+logger = logging.getLogger('server')
 setproctitle.setproctitle("Server")
 _ONE_DAY_IN_SECONDS = 60 * 60
 _MS_TO_S = 0.001
@@ -67,7 +71,8 @@ class Server:
         step3:向client发送请求
         step4:向Manage发送worker实时的吞吐量
     """
-    def __init__(self, port, aimport, feport, model_name, profile,slo, batch=1):
+
+    def __init__(self, port, aimport, feport, model_name, profile, slo, batch=1):
         """
 
         :param port: server port
@@ -95,12 +100,9 @@ class Server:
                     self.batch = key  # 根据SLOs选择perferbatch
                 else:
                     break
-            print("prefer batch {}".format(self.batch))
+            logger.info("prefer batch {}".format(self.batch))
         except:
             pass
-
-
-
 
         target_port = 'localhost:' + str(self.aim_port)
         channel = grpc.insecure_channel(target_port)
@@ -114,19 +116,24 @@ class Server:
             diff_num = self.worker_profile.reci_req_num - history_num
             diff_drop = self.worker_profile.drop_num - history_drop
             self.worker_profile.throughput = diff_num
-            if diff_num == 0:
-                self.worker_profile.drop_rate = 0
-            else:
+            if diff_num != 0:
+                # if diff_num == 0:
+                #     self.worker_profile.drop_rate = 0
+                # else:
                 self.worker_profile.drop_rate = diff_drop / (diff_num * 1000 * _MS_TO_S)
-            print(
-                "server port{}, throughput is {} drop rate is {}".format(self.port, self.worker_profile.throughput,
-                                                                         self.worker_profile.drop_rate))
+                # print(
+                # "server port{}, throughput is {} drop rate is {}".format(self.port, self.worker_profile.throughput,
+                #                                                          self.worker_profile.drop_rate))
+                logger.info(
+                    "server port{}, throughput is {} drop rate is {}".format(self.port, self.worker_profile.throughput,
+                                                                             self.worker_profile.drop_rate))
 
     def __load_model(self):
         # 模型加载时间为 4s
         s = time.time()
         # time.sleep(0.5)
-        print("模型加载完成，用时 {:.3f}s".format(time.time() - s))
+        logger.info("model load complete")
+        # print("模型加载完成，用时 {:.3f}s".format(time.time() - s))
 
     def __data_parse(self, bytes_img, size):
         img = np.frombuffer(bytes_img, dtype=np.uint8)
@@ -217,7 +224,8 @@ class Server:
 
         try:
             while True:
-                print("server is running")
+                logger.info("Server is running ")
+
                 time.sleep(_ONE_DAY_IN_SECONDS)
                 print("server is over")
         except KeyboardInterrupt:
@@ -252,8 +260,8 @@ class Server:
         pass
 
     def run(self):
-        t1 = threading.Thread(target=self.__server)
-        t2 = threading.Thread(target=self.__model)
+        t1 = threading.Thread(target=self.__server, name=self.port)
+        t2 = threading.Thread(target=self.__model, name="model")
         t3 = threading.Thread(target=self.send)
         t4 = threading.Thread(target=self.__deamon)
         t6 = threading.Thread(target=self._Manage)
@@ -266,8 +274,8 @@ class Server:
 
 def main():
     profile = {1: 25, 2: 40}
-    s = Server(port=50002, aimport=50000, feport=50001, model_name="VGG", batch=2, profile=profile,slo=100)
-    s2 = Server(port=50003, aimport=50000, feport=50001, model_name="VGG", batch=2, profile=profile,slo =100)
+    s = Server(port=50002, aimport=50000, feport=50001, model_name="VGG", batch=2, profile=profile, slo=100)
+    s2 = Server(port=50003, aimport=50000, feport=50001, model_name="VGG", batch=2, profile=profile, slo=100)
     s2.run()
     s.run()
 

@@ -6,7 +6,8 @@
 # @File    : Manage.py
 # @Software: PyCharm
 import threading
-
+import logging
+import logging.config
 import grpc
 import math
 import conf.proto.test_proto.test_pb2 as pb2
@@ -18,7 +19,8 @@ import time
 
 S_2_MS = 1000
 _ONE_DAY_IN_SECONDS = 60 * 60
-
+logging.config.fileConfig('../../log/logging.conf')
+manage = logging.getLogger('manage')
 
 class Manage_F:
     def __init__(self):
@@ -81,7 +83,7 @@ class Manage:
                 else:
                     break
         except:
-            print("error")
+            manage.info("Manage ERROR")
 
     def __server(self):
         server = grpc.server(futures.ThreadPoolExecutor(max_workers=4))
@@ -99,17 +101,17 @@ class Manage:
 
         try:
             while True:
-                print("server is running")
+                manage.info("Manage server is running")
                 time.sleep(_ONE_DAY_IN_SECONDS)
-                print("server is over")
+                manage.info("Server connect closed")
         except KeyboardInterrupt:
             server.stop(0)
 
     def __daemon(self):
         while True:
             time.sleep(1)
-            print("frontend throughput is {}".format(self.frontend.throughput))
             if self.frontend.throughput != 0:
+                manage.info("frontend throughput is {}".format(self.frontend.throughput))
                 _num = len(self.workerlist)  # 现在有多少个workload
                 _prefer = math.ceil(self.frontend.throughput / self.max_throughput)  # 应该需要多少个workerload
                 if _num < _prefer:
@@ -122,9 +124,10 @@ class Manage:
                 elif _num > _prefer:  # 有空闲的机器
                     pass
 
+
     def run(self):
-        t1 = threading.Thread(target=self.__daemon)
-        t2 = threading.Thread(target=self.__server)
+        t1 = threading.Thread(target=self.__daemon,name="ManageD")
+        t2 = threading.Thread(target=self.__server,name="Manage Server")
         t1.start()
         t2.start()
 

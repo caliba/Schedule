@@ -14,6 +14,7 @@
 
 """
 import threading
+import logging.config
 import time
 import grpc
 from concurrent import futures
@@ -30,6 +31,8 @@ import lib.mstime as mytime
 _MS_TO_S = 0.001
 _ONE_DAY_IN_SECONDS = 60 * 60
 setproctitle.setproctitle("Frontend")
+logging.config.fileConfig('../../log/logging.conf')
+frontend = logging.getLogger('frontend')
 
 
 class F_Request:
@@ -103,7 +106,7 @@ class Setup(pb2_grpc.SetupServicer):
         register workload config in frontend
     """
 
-    def __init__(self, worker, idx_dic,slo):
+    def __init__(self, worker, idx_dic, slo):
         self.idx_dic = idx_dic
         self.worker = worker
         self.slo = slo
@@ -114,11 +117,15 @@ class Setup(pb2_grpc.SetupServicer):
         self.idx = self.idx + 1
         self.worker[request.port] = Worker(batch=request.batch,
                                            port=request.port)
-        print("Frontend Worker config : ")
+        # print("Frontend Worker config : ")
+        port_l = []
+        batch = []
         for key in self.worker:
-            print("Worker Port {} prefer batch is {}".format(self.worker[key].port, self.worker[key].batch))
-
-        return pb2.Setup_Response(flag=True,slo=self.slo)
+            port_l.append(self.worker[key].port)
+            batch.append(self.worker[key].batch)
+            # print("Worker Port {} prefer batch is {}".format(self.worker[key].port, self.worker[key].batch))
+        frontend.info("Frontend Worker Config has been updated: Port list: {}, Batch list {}".format(port_l, batch))
+        return pb2.Setup_Response(flag=True, slo=self.slo)
 
 
 class Frontend:
@@ -133,6 +140,7 @@ class Frontend:
         Step5: 从send_q中读取数据，再向对应port的worker发送数据
         Step6: deamon：计算frontend的throughput，并发送给Manage
     """
+
     def __init__(self, port, size=224, policy="BA", barrier=5):
         self.worker = {}  # 与Frontend所连接的所有worker port->config的字典
         self.idx_dic = {}  # idx -> port 的字典
@@ -154,7 +162,7 @@ class Frontend:
         pb2_grpc.add_C2FServicer_to_server(C2F(self.recv_q, self.config), server)
         pb2_grpc.add_SetupServicer_to_server(
             Setup(
-                worker=self.worker, idx_dic=self.idx_dic,slo=self.slo),
+                worker=self.worker, idx_dic=self.idx_dic, slo=self.slo),
             server)
         port = '[::]:' + str(self.port)
         server.add_insecure_port(port)
@@ -162,9 +170,9 @@ class Frontend:
 
         try:
             while True:
-                print("server is running")
+                frontend.info("Frontend Server is running")
                 time.sleep(_ONE_DAY_IN_SECONDS)
-                print("server is over")
+                frontend.info("Frontend Server is over")
         except KeyboardInterrupt:
             server.stop(0)
 
@@ -191,11 +199,10 @@ class Frontend:
         return p_req
 
     def __data_save(self):
-        print("data save is running -- ")
+        frontend.info("Frontend Request Save Model is running")
         while True:
             req = self.recv_q.get()
             # self.config.send_req = self.config.send_req + 1
-
             self.proc_q.put(self.__preprocess(req))
 
     def __deamon(self):
@@ -219,7 +226,7 @@ class Frontend:
         self.send_q.put(r)
 
     def __RoundRobin(self):
-        print("--- Scheduling policy RoundRobin ---")
+        frontend.info("Scheduling policy RoundRobin")
         while True:
             req = self.proc_q.get()  # 获取分配的请求
             _worker = self.worker[self.idx_dic[self.target]]
@@ -235,11 +242,10 @@ class Frontend:
             self.target = self.target % len(self.worker) + 1
 
     def __BatchAware(self):
-        print("--- Scheduling policy BatchAware ---")
+        frontend.info("Scheduling policy BatchAware")
         while True:
             while len(self.worker) == 0:
                 pass
-            # print("target {} port{}".format(self.target,self.idx_dic[self.target]))
             _worker = self.worker[self.idx_dic[self.target]]
             _batch = _worker.batch
             batch = _batch
@@ -269,7 +275,7 @@ class Frontend:
         stub = pb2_grpc.F2DStub(channel)
         while True:
             time.sleep(1)
-            msg_send = pb2.F2D_Request(throughput=int(self.config.throughput)) # 把当前throughput 发送给Manager
+            msg_send = pb2.F2D_Request(throughput=int(self.config.throughput))  # 把当前throughput 发送给Manager
             stub.F2D_getmsg(msg_send)
 
     """
@@ -314,12 +320,12 @@ class Frontend:
         stub.F2S_getmsg(msg_send)
 
     def run(self):
-        t1 = threading.Thread(target=self.__server)  # 启动服务端
-        t2 = threading.Thread(target=self.__data_save)  # 启动转发端
-        t3 = threading.Thread(target=self.__schedule)  # 启动发送端
-        t4 = threading.Thread(target=self.send)
-        t5 = threading.Thread(target=self.__deamon)
-        t6 = threading.Thread(target=self._Manage)
+        t1 = threading.Thread(target=self.__server, name="Server")  # 启动服务端
+        t2 = threading.Thread(target=self.__data_save, name="Save")  # 启动转发端
+        t3 = threading.Thread(target=self.__schedule, name="Scheduler")  # 启动发送端
+        t4 = threading.Thread(target=self.send, name="Send")
+        t5 = threading.Thread(target=self.__deamon, name="Deamon")
+        t6 = threading.Thread(target=self._Manage, name="Manage")
         # t4 = threading.Thread(target=self.__Moniter)
         t1.start()
         t2.start()

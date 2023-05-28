@@ -23,11 +23,14 @@ import lib.mstime as mytime
 import conf.proto.test_proto.test_pb2 as pb2
 import conf.proto.test_proto.test_pb2_grpc as pb2_grpc
 from queue import Queue
+import logging
+import logging.config
 
 _MS_TO_S = 0.001
 _ONE_DAY_IN_SECONDS = 60 * 60
 setproctitle.setproctitle("Client")
-
+logging.config.fileConfig('../../log/logging.conf')
+logger = logging.getLogger('client')
 
 class S2C(pb2_grpc.S2CServicer):
     def __init__(self, queue):
@@ -127,7 +130,6 @@ class Client:
             history = self.config.send_req
             time.sleep(_MS_TO_S * 1000)
             now = self.config.send_req
-            # print("client throughput is {}".format(now - history))
 
     def connect(self):
         while True:

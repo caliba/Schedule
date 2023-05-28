@@ -1,0 +1,10 @@
+2023-05-28 12:59:28,948|   DEBUG|MainThread -[18] | applog file
+2023-05-28 12:59:28,948|    INFO|MainThread -[19] | sb 
+2023-05-28 12:59:55,629|   DEBUG|MainThread -[line  18] | applog file
+2023-05-28 12:59:55,630|    INFO|MainThread -[line  19] | sb 
+2023-05-28 13:07:06,793|   DEBUG|MainThread -[line  19] | applog file
+2023-05-28 13:07:06,794|    INFO|MainThread -[line  20] | sb 
+2023-05-28 13:18:45,573|   DEBUG|MainThread -[line  19] | applog file
+2023-05-28 13:18:45,573|    INFO|MainThread -[line  20] | sb 
+2023-05-28 13:19:40,739|   DEBUG|MainThread -[line  22] | applog file
+2023-05-28 13:19:40,739|    INFO|MainThread -[line  23] | sb 
